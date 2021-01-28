@@ -70,13 +70,32 @@ int main()
    // Let's check the output
    output_mat->printMatrix();
 
+   //testing the SPD matrix constructor
+
+   //create UI menu method later
+   cout << "Team Void's Matrix Library" << endl;
+   cout << "Input the number of Matrix rows: ";
+   cin >> rows;
+   //ensuring a square matrix
+   cols = rows;
+
+   //creating a SPD matrix
+   auto* spd_mat = new Matrix<double>(rows, cols, 600, 400, 5, 1);
+
+   // Now let's test printing our matrix
+   spd_mat->printValues();
+   spd_mat->printMatrix();
+
+
    // We are now explicitly required to delete our memory
-   delete[] matrix_data;
    // As well as deleted our Matrix object
+   delete spd_mat;
+   delete[] matrix_data;
    delete dense_mat;
    delete left_mat;
    delete output_mat;
 
 	system("pause");
 
+    return 0;
 }

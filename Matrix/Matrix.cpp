@@ -18,6 +18,28 @@ template <class T>
 Matrix<T>::Matrix(int rows, int cols, T *values_ptr): rows(rows), cols(cols), size_of_values(rows * cols), values(values_ptr)
 {}
 
+//Constructor - creating the SPD matrix
+template <class T>
+Matrix<T>::Matrix(int rows, int cols, int diag_max, int diag_min, int non_diag_max, int non_diag_min) : rows(rows), cols(cols),
+diag_max(diag_max), diag_min(diag_min), non_diag_max(non_diag_max), non_diag_min(non_diag_min), size_of_values(rows* cols), preallocated(true)
+{
+    this->values = new T[this->rows * this->cols];
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            if (i == j)
+            {
+                this->values[i * cols + j] = (rand() % diag_max) + diag_min;
+            }
+            else
+            {
+                this->values[i * cols + j] = (rand() % non_diag_max) + non_diag_min;
+            }
+        }
+    }
+}
+
 // destructor
 template <class T>
 Matrix<T>::~Matrix()
@@ -27,6 +49,7 @@ Matrix<T>::~Matrix()
       delete[] this->values;
    }
 }
+
 
 // Just print out the values in our values array
 template <class T>
