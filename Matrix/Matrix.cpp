@@ -109,3 +109,155 @@ void Matrix<T>::matMatMult(Matrix& mat_left, Matrix& output)
       }
    }
 }
+
+
+
+// Matrix vector prodcut M * b = c
+// input vec is an array which is vector b
+// output in a array of size matrix->rows to store values
+template <class T>
+void Matrix<T>::matVecMult(T* vec, T* output) {
+     
+    // Set values to zero
+    for (int i = 0; i < this->rows; i++)
+    {
+        output[i] = 0;
+    }
+
+    for (int i = 0; i < this->rows; i++) {
+        for (int j = 0; j < this->cols; j++) {
+            output[i] += this->values[i * this->cols + j] * vec[j];
+        }
+    }
+}
+
+template <class T>
+void Matrix<T>::vecVecsubtract(T* vec_a, T* vec_b, T* output) {
+
+    if ((sizeof(vec_a) / sizeof(*vec_a)) != (sizeof(vec_b) / sizeof(*vec_b))) {
+        cout << "vector are not the same size for subtraction";
+        return;
+    }
+
+
+    for (int i = 0; i < this->rows; i++) {
+
+        output[i] = vec_a[i] - vec_b[i];
+
+    }
+
+}
+
+
+template <class T>
+void Matrix<T>::jacobi_solver_element(double* b, float* output, int maxIter, float tol) {
+
+    const int rows_c = (sizeof(b) / sizeof(*b));
+    float conve = 10;
+    float output2[rows_c];
+    float* pout2 = output2;
+    float sum = 0;
+    
+
+
+    for (int i = 0; i < this->rows; i++)
+    {
+        output[i] = 1;
+    }
+
+    cout << "\nwewew";
+
+    
+
+    while (conve != tol) {
+        for (int n = 0; n < maxIter; n++) {
+            for (int i = 0; i < this->rows; i++) {
+                sum = 0;
+                for (int j = 0; j < this->cols; j++) {
+                        if (i != j) {
+                            sum += this->values[i * this->cols + j] * output[j];
+                        }
+
+                }
+
+                pout2[i] = (1 / (this->values[i * this->cols + i])) * (sum + b[i]);
+            }
+
+
+            cout << "output  " << pout2 << "\n";
+            cout << "output2  " << output2 << "\n";
+            
+                      
+            swap(pout2, output);
+            
+           
+
+
+        }
+
+
+
+
+    }
+ 
+}
+
+
+template <class T>
+void  Matrix<T>::jacobi_decomposition(Matrix<T>* D, Matrix<T>* N) {
+
+    for (int i = 0; i < this->rows; i++) {
+        for (int j = 0; j < this->cols; j++) {
+            if (i == j) {
+                D->values[i * this->cols + j] = (1/this->values[i * this->cols + j]);
+                N->values[i * this->cols + j] = 0;
+            }
+            else {
+                N->values[i * this->cols + j] = this->values[i * this->cols + j];
+                D->values[i * this->cols + j] = 0;
+            }
+
+        }
+    }
+}
+
+
+template <class T>
+void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, float tol) {
+
+    auto* N = new Matrix<T>(this->rows, this->cols, true);
+    auto* D = new Matrix<T>(this->rows, this->cols, true);
+    const int rows_c = (sizeof(b) / sizeof(*b));
+    T output2[rows_c];
+    T* xk2 = output2;
+    T vecvecarray[rows_c];
+    T* pvecvecarray = vecvecarray;
+    T matvecarray[rows_c];
+    T* pmatvecarray = matvecarray;
+    T conve = 12;
+
+    cout << "matrix jacobi";
+
+    this->jacobi_decomposition(D, N);
+
+    
+    // init start values
+    for (int i = 0; i < this->rows; i++)
+    {
+        xk1[i] = 1;
+    }
+
+    // x_{k+1} = D(b - N * x_k)
+    while (conve != tol) {
+        for (int n = 0; n < maxIter; n++) {
+            N->matVecMult(xk1, pmatvecarray); // O = N * x_n
+            N->vecVecsubtract(b, pmatvecarray, pvecvecarray); // R = b - O
+            N->matVecMult(pvecvecarray, xk2); // X_{n+1} = D * R
+        }
+    }
+
+
+    delete N;
+    delete D;
+
+}
