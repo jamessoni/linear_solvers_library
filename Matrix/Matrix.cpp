@@ -110,9 +110,6 @@ void Matrix<T>::matMatMult(Matrix& mat_left, Matrix& output)
    }
 }
 
-<<<<<<< Updated upstream
-
-
 // Matrix vector prodcut M * b = c
 // input vec is an array which is vector b
 // output in a array of size matrix->rows to store values
@@ -262,7 +259,7 @@ void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, float
     delete D;
 
 }
-=======
+
 template <class T>
 void Matrix<T>::LUDecomp(Matrix& L, Matrix& U)
 {
@@ -322,4 +319,3 @@ void Matrix<T>::LUDecomp(Matrix& L, Matrix& U)
       }
    }
 }
->>>>>>> Stashed changes
