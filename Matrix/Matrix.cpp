@@ -110,8 +110,6 @@ void Matrix<T>::matMatMult(Matrix& mat_left, Matrix& output)
    }
 }
 
-
-
 // Matrix vector prodcut M * b = c
 // input vec is an array which is vector b
 // output in a array of size matrix->rows to store values
@@ -260,4 +258,64 @@ void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, float
     delete N;
     delete D;
 
+}
+
+template <class T>
+void Matrix<T>::LUDecomp(Matrix& L, Matrix& U)
+{
+
+   // Check our dimensions match
+   if (this->cols != L.cols || this->cols != U.cols || this->rows != L.rows || this->rows != U.rows )
+   {
+      std::cerr << "L and U must be of the same size as the matrix you want to decompose" << std::endl;
+      return;
+   }
+
+   // Check if our L matrix has had space allocated to it
+   if (L.values != nullptr) 
+   {
+      L.values = new T[this->rows * this->cols];
+      // Don't forget to set preallocate to true now it is protected
+      L.preallocated = true;
+   }
+
+    // Check if our U matrix has had space allocated to it
+   if (U.values != nullptr) 
+   {
+      U.values = new T[this->rows * this->cols];
+      // Don't forget to set preallocate to true now it is protected
+      U.preallocated = true;
+   }
+
+   // Setting L = I as a starting point
+   for (int i = 0; i < this->cols; i++)
+   {
+      for (int j = 0; j < this->rows; j++) {
+         if (i == j) {
+            L.values[j*this->rows + i] = 1;
+         } else {
+            L.values[j*this->rows + i] = 0;
+         }
+      }
+   }
+
+   // U = A as a starting point
+   for (int i=0;i<this->size_of_values; i++)
+   {
+      U.values[i] = this->values[i];
+   }
+
+   for (int step = 0; step<U.rows; step++)
+   {
+      double factor = 0;
+      for(int i = step+1; i < U.rows; i++)
+      {
+         factor = U.values[(i)*U.cols+step]/U.values[step*U.cols+step];
+         for(int j = step; j < U.cols; j++)
+         {
+            U.values[i*U.cols+j] -= U.values[step*U.cols+j]*factor;
+         }
+         L.values[i*cols+step] = factor;
+      }
+   }
 }
