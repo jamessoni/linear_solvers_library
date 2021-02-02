@@ -1,6 +1,7 @@
 #include <iostream>
 #include <math.h>
 #include "Matrix.h"
+#include <vector>
 
 using namespace std;
 
@@ -32,6 +33,28 @@ Matrix<T>::Matrix(int rows, int cols, bool preallocate): rows(rows), cols(cols),
 template <class T>
 Matrix<T>::Matrix(int rows, int cols, T *values_ptr): rows(rows), cols(cols), size_of_values(rows * cols), values(values_ptr)
 {}
+
+////Constructor - creating the SPD matrix
+template <class T>
+Matrix<T>::Matrix(int rows, int cols, int diag_max, int diag_min) : rows(rows), cols(cols),
+diag_max(diag_max), diag_min(diag_min), non_diag_max(non_diag_max), non_diag_min(non_diag_min), size_of_values(rows* cols), preallocated(true)
+{
+    this->values = new T[this->rows * this->cols];
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            if (i == j)
+            {
+                this->values[i * cols + j] = (rand() % diag_max) + diag_min;
+            }
+            else
+            {
+                this->values[i * cols + j] = 1;
+            }
+        }
+    }
+}
 
 // destructor
 template <class T>
@@ -126,10 +149,29 @@ void Matrix<T>::matMatMult(Matrix& mat_left, Matrix& output)
 }
 
 
+template <class T>
+float Matrix<T>::RMS_norm_diff(T* vec_a, T* vec_b) 
+{
+    // RMS norm of the different of two vectors 
+    // all input vectors/arrays need to be same size
 
+    float sum_a = 0;
+
+    // loop over all values in arraz
+    for (int i = 0; i < this->rows; i++)
+    {
+        // add the squared difference to sum_a
+        sum_a += (vec_a[i] - vec_b[i])*(vec_a[i] - vec_b[i]);
+
+    }
+
+    // return RMS norm of the squared difference
+    return sqrt(sum_a / this->rows);
+}
 
 template <class T>
-void Matrix<T>::matVecMult(T* vec, T* output) {
+void Matrix<T>::matVecMult(T* vec, T* output)
+{
     // Matrix vector prodcut M * b = c
     // input vec is an array which is vector b
     // output in a array of size matrix->rows to store values
@@ -141,8 +183,10 @@ void Matrix<T>::matVecMult(T* vec, T* output) {
     }
 
     // loop over rows and cols
-    for (int i = 0; i < this->rows; i++) {
-        for (int j = 0; j < this->cols; j++) {
+    for (int i = 0; i < this->rows; i++) 
+    {
+        for (int j = 0; j < this->cols; j++) 
+        {
             // add the right values to the output array
             output[i] += this->values[i * this->cols + j] * vec[j];
         }
@@ -151,11 +195,13 @@ void Matrix<T>::matVecMult(T* vec, T* output) {
 
 
 template <class T>
-void Matrix<T>::vecVecsubtract(T* vec_a, T* vec_b, T* output) {
+void Matrix<T>::vecVecsubtract(T* vec_a, T* vec_b, T* output) 
+{
     // Vector vector subtraction Vec_A - Vec_b = output
     // all three vectors/arrays need to be same size
   
-    for (int i = 0; i < this->rows; i++) {
+    for (int i = 0; i < this->rows; i++) 
+    {
 
         output[i] = vec_a[i] - vec_b[i];
 
@@ -163,27 +209,131 @@ void Matrix<T>::vecVecsubtract(T* vec_a, T* vec_b, T* output) {
 
 }
 
+template <class T>
+bool Matrix<T>::SPDMatrixcheck()
+{
+    //this method returns true if the matrix is symmetric 
+    // AND the sum of the non diagonal entries of the row
+    // is less than the smallest diagonal entry
+
+    int sum_nondiag{};
+    int diag_val{};
+    bool SPD{ false };
+    //bool weak_test{ false };
+
+    //testing for symmetry in matrix
+    for (int i = 0; i < rows; i++){
+        for (int j = 0; j < cols; j++){
+            if (i == j){
+                continue;
+            }
+            else{
+                if (this->values[i * rows + j] == this->values[j * cols + i]){
+                    SPD = true;
+                }
+                else{
+                    SPD = false;
+                }
+            }
+        }
+    }
+    //SPD test (weak) that enables convergence to occur
+    for (int i = 0; i < rows; i++){
+        for (int j = 0; j < cols; j++){
+            if (i == j){
+                diag_val = this->values[i * rows + j];
+                continue;
+            }
+            else{
+                sum_nondiag += this->values[i * rows + j];
+            }
+        }
+    }
+    if (diag_val <= sum_nondiag) { 
+        SPD = false; 
+    }
+    if (SPD == true){
+        std::cout << "\nPasses weak SPD check";
+}
+    else {
+        std::cout << "\nMay not converge with chosen solvers";
+    }
+    return SPD;
+}
 
 template <class T>
-float Matrix<T>::RMS_norm_diff(T* vec_a, T* vec_b) {
-    // RMS norm of the different of two vectors 
-    // all input vectors/arrays need to be same size
+void Matrix<T>::gauss_seidel(Matrix<T>& a, Matrix<T>& b, Matrix<T>& x_init)
+{
+    //Both convergence tolerance and fixed iteration methodologies presented
+    //design decision that although set iteration gives a good method for
+    // large matrices. For small matrices it may not be the most effective
 
-    
-    float sum_a = 0;
+    double tol = 1e-5;
+    int iter_max = 500;
+    int iter = 0;
+    double conve = 10;
 
-    // loop over all values in arraz
-    for (int i = 0; i < this->rows; i++) {
+    T* pout2 = new T[x_init.rows];
 
-        // add the squared difference to sum_a
-        sum_a += (vec_a[i] - vec_b[i])*(vec_a[i] - vec_b[i]);
+    std::shared_ptr<Matrix<T>> y(new Matrix<T>(x_init.rows, x_init.cols, true));
+    //filling y
+     for (int i = 0; i < y->rows * y->cols; i++)
+    {
+        y->values[i] = 0;
     }
 
-    // return RMS norm of the squared difference
-    return sqrt(sum_a / this->rows);
+    // std::shared_ptr<Matrix<T>> x(new Matrix<T>(x_init.rows, x_init.cols, true));
 
+     while (conve > tol)
+     {
+         iter += 1;
+         std::cout << "\niteration: " << iter;
+         for (int i = 0; i < x_init.rows; i++)
+         {
+             pout2[i] = x_init.values[i];
+         }
 
+         for (int i = 0; i < this->rows; i++)
+         {
+             y->values[i] = b.values[i] / a.values[i * rows + i];
+             for (int j = 0; j < this->cols; j++)
+             {
+                 if (i == j)
+                 {
+                     continue;
+                 }
+                 y->values[i] = y->values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
+                 x_init.values[i] = y->values[i];
+             }
+         }
+         conve = RMS_norm_diff(pout2, x_init.values);
+         std::cout << "\nconvergence values: " << conve;
+     }
+     std::cout << std::endl;
+    
+     delete[] pout2;
 
+    // Same implementation as above which is only based off number of iterations
+
+    //while (iter_max > 0)
+    //{
+    //    //for (int i = 0;x->values[i] = x_init[i];
+    //    for (int i = 0; i < this->rows; i++)
+    //    {
+    //        y->values[i] = b.values[i] / a.values[i * rows + i];
+    //        for (int j = 0; j < this->cols; j++)
+    //        {
+    //            if (i == j)
+    //            {
+    //                continue;
+    //            }
+    //            y->values[i] = y->values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
+    //            x_init.values[i] = y->values[i];
+    //        }
+    //    }   
+    //    iter -= 1;
+    //}  
+    //std::cout << std::endl;
 
 }
 
