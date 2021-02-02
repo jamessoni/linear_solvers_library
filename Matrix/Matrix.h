@@ -28,6 +28,8 @@ public:
    // Functions for Jacobi solver matrix
    void jacobi_solver_matrix(double* b, double* output, int maxIter);
    void jacobi_decomposition(Matrix<T>* D, Matrix<T>* N);
+	
+   void LUDecomp(Matrix<T>& L, Matrix<T>& U);
 
    // Explicitly using the C++11 nullptr here
    T *values = nullptr;   
