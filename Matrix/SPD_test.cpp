@@ -7,7 +7,7 @@ using namespace std;
 
 //testing both the SPD constructor 
 // as well as the SPD (weak) check method
-int main()
+int main_SPD()
 {
 	//testing on small matrices
 	int rows = 3;
