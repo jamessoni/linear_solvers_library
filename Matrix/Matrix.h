@@ -10,7 +10,8 @@ public:
    // constructor where we already have allocated memory outside
    Matrix(int rows, int cols, T *values_ptr);
    //constructor to create SPD matrix
-   Matrix(int rows, int cols, int diag_max, int diag_min, int non_diag_max, int non_diag_min);
+   //Matrix(int rows, int cols, int diag_max, int diag_min, int non_diag_max, int non_diag_min);
+   Matrix(int rows, int cols, int diag_max, int diag_min);
 
    // destructor
    virtual ~Matrix();
@@ -21,9 +22,11 @@ public:
 
    // Perform some operations with our matrix
    void matMatMult(Matrix<T>& mat_left, Matrix<T>& output);
+   double RMS_norm_diff(T* vec_a, T* vec_b);
+   bool SPDMatrixcheck();
 
    //Gauss-seidel solver
-   //Matrix<T> gauss_seidel(Matrix<T> &A, Matrix<T> &B, );
+   void gauss_seidel(Matrix<T>& a, Matrix<T>& b, Matrix<T>& x);
 
    // Explicitly using the C++11 nullptr here
    T *values = nullptr;   
