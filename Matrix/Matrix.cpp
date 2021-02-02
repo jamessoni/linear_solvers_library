@@ -1,4 +1,5 @@
 #include <iostream>
+#include <math.h>
 #include "Matrix.h"
 
 // Constructor - using an initialisation list here
