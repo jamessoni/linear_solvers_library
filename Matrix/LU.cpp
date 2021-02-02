@@ -51,9 +51,11 @@ int main()
     double output[] = {0.0,0.0,0.0};
 
     dense_mat->LUSolve(b,output);
+
+    cout<< "The solution is: ";
     for (int i = 0; i<cols;i++)
     {
-      cout<< "The solution is" << output[i] << " ";
+      cout<< output[i] << " ";
     }
     delete dense_mat;
 }
