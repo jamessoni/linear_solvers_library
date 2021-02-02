@@ -30,7 +30,7 @@ public:
    void jacobi_decomposition(Matrix<T>* D, Matrix<T>* N);
 	
    void LUDecomp(Matrix<T>& L, Matrix<T>& U);
-
+   void LUSolve(double* b, double* output);
    // Explicitly using the C++11 nullptr here
    T *values = nullptr;   
    int rows = -1;

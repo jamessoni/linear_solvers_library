@@ -2,6 +2,20 @@
 #include <math.h>
 #include "Matrix.h"
 
+using namespace std;
+
+void daxpy(int n, double alpha, double *dx, int incx, double *dy, int incy)
+{
+
+   // Let's ignore the incx and incy for now
+   /////#pragma loop(no_vector)
+   for (int i = 0; i < n; i++)
+   {
+      dy[i * incy] += alpha * dx[i * incy];
+   }
+
+}
+
 // Constructor - using an initialisation list here
 template <class T>
 Matrix<T>::Matrix(int rows, int cols, bool preallocate): rows(rows), cols(cols), size_of_values(rows * cols), preallocated(preallocate)
@@ -392,11 +406,51 @@ void Matrix<T>::LUDecomp(Matrix& L, Matrix& U)
       for(int i = step+1; i < U.rows; i++)
       {
          factor = U.values[(i)*U.cols+step]/U.values[step*U.cols+step];
-         for(int j = step; j < U.cols; j++)
-         {
-            U.values[i*U.cols+j] -= U.values[step*U.cols+j]*factor;
-         }
+         //std::cout << "x: " << U.values[step*U.cols] << " y: "<< U.values[i*U.cols] << " n: " << U.cols-step << " factor: " << factor << "\n";
+         
+         daxpy(U.cols-step,-factor,&U.values[step*U.cols+step],1,&U.values[i*U.cols+step],1);
+         
+         //U.printMatrix();
+         // for(int j = step; j < U.cols; j++)
+         // {
+         //    //U.values[i*U.cols+j] -= U.values[step*U.cols+j]*factor;
+         // }         
          L.values[i*cols+step] = factor;
       }
    }
+}
+
+template <class T>
+void Matrix<T>::LUSolve(double* b, double* output)
+{
+   auto *L = new Matrix<double>(this->rows, this->cols, true);
+   auto *U = new Matrix<double>(this->rows, this->cols, true);
+   this->LUDecomp(*L,*U);
+
+   //std::cout<<b[0]<<b[1]<<b[2];
+   int size = 3;
+   double y[3];
+   for (int i = 0; i<size;i++)
+   {
+      double sum =0;
+      for (int j = 0; j<size; j++)
+      {
+         sum+= L->values[i*L->cols + j]*y[j];
+      }
+      y[i]=(b[i]-sum)/L->values[i*(L->cols+1)];
+   }
+
+   for (int i = size-1; i>=0;i--)
+   {
+      double sum =0;
+      for (int j = 0; j<size; j++)
+      {
+         sum+= U->values[i*U->cols + j]*output[j];
+      }
+
+      output[i]=(y[i]-sum)/U->values[i*(U->cols+1)];
+   }
+
+   delete L;
+   delete U;
 }
