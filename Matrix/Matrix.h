@@ -24,7 +24,6 @@ public:
    void matMatMult(Matrix<T>& mat_left, Matrix<T>& output);
 
   
-   double RMS_norm_diff(T* vec_a, T* vec_b);
    bool SPDMatrixcheck();
 
    //Gauss-seidel solver
@@ -35,10 +34,10 @@ public:
    float RMS_norm_diff(T* vec_a, T* vec_b);
 
    // Jacobi solver element-wise
-   void jacobi_solver_element(T* b, T* output, int maxIter);
+   void jacobi_solver_element(T* b, T* output, int maxIter, bool initialised);
 
    // Functions for Jacobi solver matrix
-   void jacobi_solver_matrix(double* b, double* output, int maxIter);
+   void jacobi_solver_matrix(double* b, double* output, int maxIter, bool initialised);
    void jacobi_decomposition(Matrix<T>* D, Matrix<T>* N);
 	
    void LUDecomp(Matrix<T>& L, Matrix<T>& U);
