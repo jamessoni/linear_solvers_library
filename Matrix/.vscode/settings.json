@@ -1,6 +1,13 @@
 {
     "C_Cpp.errorSquiggles": "Disabled",
     "files.associations": {
-        "vector": "cpp"
+        "vector": "cpp",
+        "memory": "cpp",
+        "system_error": "cpp",
+        "type_traits": "cpp",
+        "xmemory": "cpp",
+        "xstddef": "cpp",
+        "xstring": "cpp",
+        "iostream": "cpp"
     }
 }

@@ -6,6 +6,7 @@
 #include "CSRMatrix.h"
 #include "CSRMatrix.cpp"
 #include <vector>
+#include <chrono>
 
 using namespace std;
 
@@ -47,15 +48,34 @@ int main()
       dense_mat->values[i] = vs[i];
     }
 
+    //auto *LU = new Matrix<double>(rows, cols, true);
+    // dense_mat->IPLUDecomp();
+    // dense_mat->printMatrix();
+
     double b[] = {3.0,1.0,3.0};
     double output[] = {0.0,0.0,0.0};
 
-    dense_mat->LUSolve(b,output);
+    // // dense_mat->LUSolve(b,output);
 
+    //dense_mat->conjugate_gradient(b,output,100000,0.005);
+
+    dense_mat->LUSolve(b,output,false);
     cout<< "The solution is: ";
     for (int i = 0; i<cols;i++)
     {
       cout<< output[i] << " ";
     }
-    delete dense_mat;
+
+    // output[0]= 0.0;
+    // output[1] = 0.0;
+    // output[2] = 0.0;
+    
+    // dense_mat->LUSolve(b,output, true);
+
+    // cout<< "The solution is: ";
+    // for (int i = 0; i<cols;i++)
+    // {
+    //   cout<< output[i] << " ";
+    // }
+    // delete dense_mat;
 }
