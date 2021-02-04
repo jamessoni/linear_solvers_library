@@ -127,3 +127,247 @@ void CSRMatrix<T>::matMatMult(CSRMatrix<T>& mat_left, CSRMatrix<T>& output)
 
    // HOW DO WE SET THE SPARSITY OF OUR OUTPUT MATRIX HERE??
 }
+
+
+
+template<class T>
+void CSRMatrix<T>::dense2sparse(Matrix<T>& tosparsify, CSRMatrix<T>* output)
+{
+    int nnzvs = 0;
+
+    for (int i = 0; i < tosparsify.rows * tosparsify.cols; i++)
+    {
+        if (!tosparsify.values[i] == 0)
+        {
+            nnzvs++;
+        }
+    }
+
+
+    int nnzv = 0;
+
+
+    T* vals = new T[nnzvs];
+    int* col_index = new int[nnzvs];
+    int* row_position = new int[nnzvs + 1];
+    row_position[0] = 0;
+
+    for (int i = 0; i < tosparsify.rows; i++)
+    {
+        for (int j = 0; j < tosparsify.cols; j++)
+        {
+            if (!tosparsify.values[i * tosparsify.cols + j] == 0)
+            {
+                vals[nnzv] = tosparsify.values[i * tosparsify.cols + j];
+                col_index[nnzv] = (i * tosparsify.cols + j) % tosparsify.cols;
+                nnzv++;
+            }
+        }
+        row_position[i + 1] = nnzv;
+    }
+
+
+    output->nnzs = nnzvs;
+    output->values = vals;
+    output->col_index = col_index;
+    output->row_position = row_position;
+
+    // delete to pointers to memory location but not the array in the memory
+
+}
+
+
+template <class T>
+void CSRMatrix<T>::jacobi_solver_sparse(T* b, T* output, int maxIter, bool initialised) {
+    /*
+    Jacobi solver using element-wise calcualtions
+    Solves a linear system of equations A*x=b using an ittertive apporach
+    Input:
+        <T>array[]* b: RHS of the linear system
+        <T>array[]* output: array in which the solution will be stored in
+        int maxIter: maxiumum itterations
+        bool initialised: If true, output array was initialised with fist guess
+                          If false, output array will be filled with random values
+    Output:
+        none
+
+    A needs to be a SPD matrix wiht no zeros on main diagonal
+    and the linear system needs to have a solution.
+    Tolerance of the solver can be changed in the tol variable below
+
+    */
+
+
+    // create variables 
+    double conve = 10;   // store RMS difference between x_{k} and x_{k+1}
+    T* pout2 = new T[this->rows];   // store x_{k+1}
+    float sum = 0;
+    int j_index = 0;
+    double a_ii = 0;
+    double sum_RMS = 0;
+    //set solution tolerance to e-10
+    double tol = 1.e-10;
+
+
+    // if not initialised fist input than use random numbers to 
+    // initialise x_{k}
+    if (initialised == false) {
+        // initialise starting condition x_{k} 
+        for (int i = 0; i < this->rows; i++)
+        {
+            output[i] = rand() % 500 + 50;
+        }
+    }
+
+
+    // start iteration, only do maxIter steps 
+    for (int n = 0; n < maxIter; n++) {
+        // loop over rows
+        for (int i = 0; i < this->rows; i++) {
+            // set variable to zero such that it can be added to 
+            sum = 0;
+            j_index = 0;
+            // loop over non zero values in row
+            for (int j = this->row_position[i]; j < this->row_position[i + 1]; j++) {
+                // if i = j dont do anything because that is row value that is calcualted
+                // for i not equal to j, mutiply both values and add to sum
+                if (this->col_index[j] != i) {
+                    //cout << "this->values[j] " << this->values[j] << "  j  " << j_index << " output[j] " << output[j_index] << endl;
+                    sum += this->values[j] * output[j_index];
+                }
+
+                if (this->col_index[j] == i) {
+                    a_ii = this->values[j];
+                }
+
+                j_index++;
+            }
+            // put the sum value in the right spot in the array with some additonal calculations
+            //cout << "b[i] " << b[i] << "  sum " << sum << endl;
+            pout2[i] = (1 / (a_ii)) * (b[i] - sum);
+            //cout << " pout2 cal " << pout2[i] << endl;
+        }
+
+        // set RMS norm summation varible to zero
+        sum_RMS = 0;
+
+        // loop over all values in arraz
+        for (int i = 0; i < this->rows; i++) {
+
+            //cout << pout2[i] << "  " << output[i] << endl;
+            // add the squared difference to sum_a for the RMS convergence between the
+            // different itterations
+            sum_RMS += (pout2[i] - output[i]) * (pout2[i] - output[i]);
+
+            // copy values into new array for next itteration
+            output[i] = pout2[i];
+
+
+        }
+
+        // RMS norm of the squared difference
+        conve = sqrt(sum_RMS / this->rows);
+
+        //cout << "N " << n << " conve : " << conve << endl;
+
+        // if rms norm is smaller than tolerance -> break loop
+        if (conve < tol) {
+            break;
+        }
+    }
+
+    delete[] pout2;
+}
+
+template <class T>
+float CSRMatrix<T>::RMS_norm_diff(T* vec_a, T* vec_b)
+{
+    // RMS norm of the different of two vectors 
+    // all input vectors/arrays need to be same size
+
+    float sum_a = 0;
+
+    // loop over all values in arraz
+    for (int i = 0; i < this->rows; i++)
+    {
+        // add the squared difference to sum_a
+        sum_a += (vec_a[i] - vec_b[i]) * (vec_a[i] - vec_b[i]);
+
+    }
+
+    // return RMS norm of the squared difference
+    return sqrt(sum_a / this->rows);
+}
+
+template <class T>
+void CSRMatrix<T>::gauss_seidel(CSRMatrix<T>& a, Matrix<T>& b, Matrix<T>& x_init)
+{
+    //   Gauss-seidel implementation
+    //   Method for solving a linear system, Ax = b, where A is a positive definite matrix (sparse matrix)
+    //   Both convergence tolerance and fixed iteration methodologies presented 
+    //   as convergence criteria
+    //   Convergence tolerance and iteration number are predefined in the variables tol and iter_max below.
+
+    double tol = 1e-10;
+    int iter_max = 500;
+    int iter = 0;
+    double conve = 10;
+    double A_ii = 0;
+
+    T* pout2 = new T[x_init.rows];
+
+    //x_init has initialised 0's
+    for (int i = 0; i < x_init.rows; i++)
+    {
+        x_init.values[i] = 0;
+    }
+
+    while (conve > tol)
+        //while (iter < iter_max)
+    {
+        iter += 1;
+        std::cout << "\niteration: " << iter;
+        //updating pout2 as previous iteration x.values
+        //enables convergence parameter to be checked against predefined tolerance
+        for (int i = 0; i < x_init.rows; i++)
+        {
+            pout2[i] = x_init.values[i];
+        }
+
+        for (int i = 0; i < this->rows; i++)
+        {
+
+            //A_ii = 0;
+            //looping through diagonal entries for A_ii
+            for (int val_index = a.row_position[i]; val_index < a.row_position[i + 1]; val_index++)
+            {
+
+                if (a.col_index[val_index] == i)
+                {
+                    A_ii = a.values[val_index];
+                    //once A_ii its value stored - break to prevent overwriting
+                    if (A_ii != 0)
+                    {
+                        break;
+                    }
+                }
+            }
+            x_init.values[i] = b.values[i] / A_ii;
+            //using compressed sparse row matVecMult 
+            for (int val_index = a.row_position[i]; val_index < a.row_position[i + 1]; val_index++)
+            {
+                if (a.col_index[val_index] == i)
+                {
+                    continue;
+                }
+                x_init.values[i] = x_init.values[i] - (a.values[val_index] * x_init.values[col_index[val_index]]) / A_ii;
+            }
+        }
+        conve = RMS_norm_diff(pout2, x_init.values);
+        std::cout << "\nconvergence values: " << conve;
+    }
+    std::cout << std::endl;
+
+    delete[] pout2;
+
+}
