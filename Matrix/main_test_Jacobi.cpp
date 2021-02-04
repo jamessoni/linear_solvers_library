@@ -1,70 +1,106 @@
 #include <iostream>
+#include <fstream>
+#include <iterator>
 #include <math.h>
 #include <ctime>
+#include <vector>
 #include "Matrix.h"
 #include "Matrix.cpp"
 
+
+
 using namespace std;
 
-int main()
+int main_22()
 {
+	vector<double> N;
+	vector<double> time_Matrix;
+	vector<double> time_element;
+	float RMS_a = 0;
+	float RMS_b = 0;
+	for (int n = 2; n < 1000; n += 10) {
 
-   int rows = 100;
-   int cols = 100;
+		N.push_back(n);
 
-   // Testing our matrix class
-   auto *dense_mat = new Matrix<double>(rows, cols, true);
-
-
-   // Now let's test printing our matrix with our other function
-   //dense_mat->printMatrix();      
-   //ddense_mat->printMatrix();
-
+		cout << "Number of rows and cols " << n << endl;
 
 
-   // create b vector and fill it with random values
-   double foo[100];
-   for (int i = 0; i < 100; i++) {
-	   foo[i] = rand() % 300 + 5;
-   }
-   // set up arrays to store solutions for output to screen
-   double output1[100];
-   double* output = output1;{}
-   double* answer_check = new double[100];
-   double* answer_check12 = new double[100];
+		int const rows = n;
+		int cols = rows;
 
- 
+		// Testing our matrix class
+		auto* dense_mat = new Matrix<double>(rows, cols, true);
 
 
-   clock_t start = clock();
-   dense_mat->jacobi_solver_matrix(foo, output, 100000);
-   clock_t end = clock();
-   cout << "Time spent on matrix version: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-
-   clock_t start2 = clock();
-   dense_mat->jacobi_solver_element(foo, output, 100000);
-   clock_t end2 = clock();
-   cout << "Time spent element-wise version: " << (double)(end2 - start2) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+		// Now let's test printing our matrix with our other function
+		//dense_mat->printMatrix();      
+		//ddense_mat->printMatrix();
 
 
 
-   // uncomment below check solution, if output to screen is close to zero than last solver is working correct
+		// create b vector and fill it with random values
+		double* foo = new double[rows];
+		for (int i = 0; i < rows; i++) {
+			foo[i] = rand() % 300 + 5;
+		}
+		// set up arrays to store solutions for output to screen
+		//double output1[rows];
+		double* output = new double[rows];
+		double* answer_check = new double[n];
+		double* answer_check12 = new double[n];
 
 
-   /*
-   dense_mat->matVecMult(output, answer_check12);
 
-   dense_mat->vecVecsubtract(foo, answer_check12, answer_check);
+		clock_t start = clock();
+		dense_mat->jacobi_solver_matrix(foo, output, 100000, false);
+		clock_t end = clock();
+		cout << "Time spent on matrix version: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+		time_Matrix.push_back((double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0);
 
-   
-   for (int i = 0; i < dense_mat->cols; i++) {
-	   cout << answer_check[i] << endl;
-   }
-   
-   */
-   
 
-   delete dense_mat;
-   system("pause");
+
+		dense_mat->matVecMult(output, answer_check12);
+
+		RMS_a = dense_mat->RMS_norm_diff(foo, answer_check12);
+		cout << RMS_a << endl;
+
+
+
+
+
+
+		clock_t start2 = clock();
+		dense_mat->jacobi_solver_element(foo, output, 100000, false);
+		clock_t end2 = clock();
+		cout << "Time spent element-wise version: " << (double)(end2 - start2) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+
+		time_element.push_back((double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0);
+
+		// uncomment below check solution, if output to screen is close to zero than last solver is working correct
+
+
+
+		dense_mat->matVecMult(output, answer_check12);
+
+		RMS_b = dense_mat->RMS_norm_diff(foo, answer_check12);
+
+		cout << RMS_b << endl;
+
+		delete[] foo;
+		delete[] output;
+		delete[] answer_check12;
+		delete[] answer_check;
+		delete[] dense_mat;
+	}
+
+
+	//std::ofstream output_file("./Jacobi_optimized_O3.txt");
+	//std::ostream_iterator<std::string> output_iterator(output_file, "\n");
+	//std::copy(N.begin(), N.end(), output_iterator);
+
+
+
+	system("pause");
+	return 0;
 
 }
