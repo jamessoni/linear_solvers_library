@@ -1,7 +1,9 @@
 #include <iostream>
+#include <math.h>
 #include "Matrix.h"
 #include <float.h> //For DBL_MAX
 #include <numeric>
+#include <vector>
 
 using namespace std;
 
@@ -50,6 +52,28 @@ Matrix<T>::Matrix(int rows, int cols, bool preallocate): rows(rows), cols(cols),
 template <class T>
 Matrix<T>::Matrix(int rows, int cols, T *values_ptr): rows(rows), cols(cols), size_of_values(rows * cols), values(values_ptr)
 {}
+
+////Constructor - creating the SPD matrix
+template <class T>
+Matrix<T>::Matrix(int rows, int cols, int diag_max, int diag_min) : rows(rows), cols(cols),
+diag_max(diag_max), diag_min(diag_min), non_diag_max(non_diag_max), non_diag_min(non_diag_min), size_of_values(rows* cols), preallocated(true)
+{
+    this->values = new T[this->rows * this->cols];
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+            if (i == j)
+            {
+                this->values[i * cols + j] = (rand() % diag_max) + diag_min;
+            }
+            else
+            {
+                this->values[i * cols + j] = 1;
+            }
+        }
+    }
+}
 
 // destructor
 template <class T>
@@ -143,11 +167,33 @@ void Matrix<T>::matMatMult(Matrix& mat_left, Matrix& output)
    }
 }
 
-// Matrix vector prodcut M * b = c
-// input vec is an array which is vector b
-// output in a array of size matrix->rows to store values
+
 template <class T>
-void Matrix<T>::matVecMult(T* vec, T* output) {
+float Matrix<T>::RMS_norm_diff(T* vec_a, T* vec_b) 
+{
+    // RMS norm of the different of two vectors 
+    // all input vectors/arrays need to be same size
+
+    float sum_a = 0;
+
+    // loop over all values in arraz
+    for (int i = 0; i < this->rows; i++)
+    {
+        // add the squared difference to sum_a
+        sum_a += (vec_a[i] - vec_b[i])*(vec_a[i] - vec_b[i]);
+
+    }
+
+    // return RMS norm of the squared difference
+    return sqrt(sum_a / this->rows);
+}
+
+template <class T>
+void Matrix<T>::matVecMult(T* vec, T* output)
+{
+    // Matrix vector prodcut M * b = c
+    // input vec is an array which is vector b
+    // output in a array of size matrix->rows to store values
      
     // Set values to zero
     for (int i = 0; i < this->rows; i++)
@@ -155,84 +201,239 @@ void Matrix<T>::matVecMult(T* vec, T* output) {
         output[i] = 0;
     }
 
-    for (int i = 0; i < this->rows; i++) {
-        for (int j = 0; j < this->cols; j++) {
+    // loop over rows and cols
+    for (int i = 0; i < this->rows; i++) 
+    {
+        for (int j = 0; j < this->cols; j++) 
+        {
+            // add the right values to the output array
             output[i] += this->values[i * this->cols + j] * vec[j];
         }
     }
 }
 
+
 template <class T>
-void Matrix<T>::vecVecsubtract(T* vec_a, T* vec_b, T* output) {
-
-    if ((sizeof(vec_a) / sizeof(*vec_a)) != (sizeof(vec_b) / sizeof(*vec_b))) {
-        cout << "vector are not the same size for subtraction";
-        return;
-    }
-
-
-    for (int i = 0; i < this->rows; i++) {
+void Matrix<T>::vecVecsubtract(T* vec_a, T* vec_b, T* output) 
+{
+    // Vector vector subtraction Vec_A - Vec_b = output
+    // all three vectors/arrays need to be same size
+  
+    for (int i = 0; i < this->rows; i++) 
+    {
 
         output[i] = vec_a[i] - vec_b[i];
     }
 }
 
 template <class T>
-void Matrix<T>::jacobi_solver_element(double* b, float* output, int maxIter, float tol) {
+bool Matrix<T>::SPDMatrixcheck()
+{
+    //this method returns true if the matrix is symmetric 
+    // AND the sum of the non diagonal entries of the row
+    // is less than the smallest diagonal entry
 
-    const int rows_c = (sizeof(b) / sizeof(*b));
-    float conve = 10;
-    float output2[rows_c];
-    float* pout2 = output2;
-    float sum = 0;
+    int sum_nondiag{};
+    int diag_val{};
+    bool SPD{ false };
+    //bool weak_test{ false };
+
+    //testing for symmetry in matrix
+    for (int i = 0; i < rows; i++){
+        for (int j = 0; j < cols; j++){
+            if (i == j){
+                continue;
+            }
+            else{
+                if (this->values[i * rows + j] == this->values[j * cols + i]){
+                    SPD = true;
+                }
+                else{
+                    SPD = false;
+                }
+            }
+        }
+    }
+    //SPD test (weak) that enables convergence to occur
+    for (int i = 0; i < rows; i++){
+        for (int j = 0; j < cols; j++){
+            if (i == j){
+                diag_val = this->values[i * rows + j];
+                continue;
+            }
+            else{
+                sum_nondiag += this->values[i * rows + j];
+            }
+        }
+    }
+    if (diag_val <= sum_nondiag) { 
+        SPD = false; 
+    }
+    if (SPD == true){
+        std::cout << "\nPasses weak SPD check";
+}
+    else {
+        std::cout << "\nMay not converge with chosen solvers";
+    }
+    return SPD;
+}
+
+
+template <class T>
+void Matrix<T>::gauss_seidel(Matrix<T>& a, Matrix<T>& b, Matrix<T>& x_init)
+{
+    //Both convergence tolerance and fixed iteration methodologies presented
+    //design decision that although set iteration gives a good method for
+    // large matrices. For small matrices it may not be the most effective
+
+    double tol = 1e-5;
+    int iter_max = 500;
+    int iter = 0;
+    double conve = 10;
+
+    T* pout2 = new T[x_init.rows];
+
+    std::shared_ptr<Matrix<T>> y(new Matrix<T>(x_init.rows, x_init.cols, true));
+    //filling y
+     for (int i = 0; i < y->rows * y->cols; i++)
+    {
+        y->values[i] = 0;
+    }
+
+    // std::shared_ptr<Matrix<T>> x(new Matrix<T>(x_init.rows, x_init.cols, true));
+
+     while (conve > tol)
+     {
+         iter += 1;
+         std::cout << "\niteration: " << iter;
+         for (int i = 0; i < x_init.rows; i++)
+         {
+             pout2[i] = x_init.values[i];
+         }
+
+         for (int i = 0; i < this->rows; i++)
+         {
+             y->values[i] = b.values[i] / a.values[i * rows + i];
+             for (int j = 0; j < this->cols; j++)
+             {
+                 if (i == j)
+                 {
+                     continue;
+                 }
+                 y->values[i] = y->values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
+                 x_init.values[i] = y->values[i];
+             }
+         }
+         conve = RMS_norm_diff(pout2, x_init.values);
+         std::cout << "\nconvergence values: " << conve;
+     }
+     std::cout << std::endl;
     
+     delete[] pout2;
+
+    // Same implementation as above which is only based off number of iterations
+
+    //while (iter_max > 0)
+    //{
+    //    //for (int i = 0;x->values[i] = x_init[i];
+    //    for (int i = 0; i < this->rows; i++)
+    //    {
+    //        y->values[i] = b.values[i] / a.values[i * rows + i];
+    //        for (int j = 0; j < this->cols; j++)
+    //        {
+    //            if (i == j)
+    //            {
+    //                continue;
+    //            }
+    //            y->values[i] = y->values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
+    //            x_init.values[i] = y->values[i];
+    //        }
+    //    }   
+    //    iter -= 1;
+    //}  
+    //std::cout << std::endl;
+
+}
 
 
+template <class T>
+void Matrix<T>::jacobi_solver_element(T* b, T* output, int maxIter) {
+    /*
+    Jacobi solver using element-wise calcualtions
+    Solves a linear system of equations A*x=b using an ittertive apporach
+    Input:
+        <T>array[]* b: RHS of the linear system
+        <T>array[]* output: array in which the solution will be stored in
+        int maxIter: maxiumum itterations 
+    Output:
+        none
+
+    A needs to be a SPD matrix wiht no zeros on main diagonal 
+    and the linear system needs to have a solution.
+    Tolerance of the solver can be changed in the tol variable below
+
+    */
+
+
+    // create variables 
+    double conve = 10;   // store RMS difference between x_{k} and x_{k+1}
+    T* pout2 = new T[this->rows];   // store x_{k+1}
+    float sum = 0; 
+    int n = 0;
+    //set solution tolerance to e-8
+    double tol = 1.e-10;
+
+    // initialise x_{k} 
     for (int i = 0; i < this->rows; i++)
     {
-        output[i] = 1;
+        output[i] = 1032;
     }
 
-    cout << "\nwewew";
-
-    
-
-    while (conve != tol) {
-        for (int n = 0; n < maxIter; n++) {
-            for (int i = 0; i < this->rows; i++) {
-                sum = 0;
-                for (int j = 0; j < this->cols; j++) {
-                        if (i != j) {
-                            sum += this->values[i * this->cols + j] * output[j];
-                        }
-
+    // start iteration, only do maxIter steps 
+    for( int n = 0; n <maxIter; n++) {
+        // loop over rows
+        for (int i = 0; i < this->rows; i++) {
+            // set variable to zero such that it can be added to 
+            sum = 0; 
+            // loop over cols of matrix
+            for (int j = 0; j < this->cols; j++) {
+                // if i = j dont do anything because that is row value that is calcualted
+                // for i not equal to j, mutiply both values and add to sum
+                if (i != j) {
+                    sum += this->values[i * this->cols + j] * output[j];
                 }
 
-                pout2[i] = (1 / (this->values[i * this->cols + i])) * (sum + b[i]);
             }
-
-
-            cout << "output  " << pout2 << "\n";
-            cout << "output2  " << output2 << "\n";
-            
-                      
-            swap(pout2, output);
-            
-           
-
-
+            // put the sum value in the right spot in the array with some additonal calculations
+            pout2[i] = (1 / (this->values[i * this->rows + i])) * (b[i] - sum);
         }
-
-
-
-
+        // swap the pointers from the x_k and x_{k+1} array such that the calculations above
+        // can be repated without copying the arrays 
+        std::swap(pout2, output);
+        // find RMS norm of output-pout2 array 
+        conve = RMS_norm_diff(pout2, output);
+      
+        // if rms norm is smaller than tolerance -> break loop
+        if (conve < tol) {
+            break;
+        }
     }
- 
+
+    delete[] pout2;
 }
 
 
 template <class T>
 void  Matrix<T>::jacobi_decomposition(Matrix<T>* D, Matrix<T>* N) {
+    /*This function will decompose this->matirx (A) values into two matrices D and N. A = D + N
+    * Matirx D will store the inverse of all values on the diagonal i.e. 1/(A[i, i])
+    * Matirx N will store the lower and upper triangular parts of A
+    *   Input:
+        Matrix<T>* D: matrix of same dimensions as A, to store the diagonal values
+        Matrix<T>* N: matrix of same dimensions as A, to store the lower and upper triangular
+    Output:
+        none
+    */
 
     for (int i = 0; i < this->rows; i++) {
         for (int j = 0; j < this->cols; j++) {
@@ -251,44 +452,76 @@ void  Matrix<T>::jacobi_decomposition(Matrix<T>* D, Matrix<T>* N) {
 
 
 template <class T>
-void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, float tol) {
+void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter) {
+    /*
+    Jacobi solver using matrix manipulation
+    Solves a linear system of equations A*x=b using an ittertive apporach, where every itteration 
+    mutiple matrix operations are performed: xk2 = D*(b - N * xk1)
+    Input:
+        <T>array[]* b: RHS of the linear system
+        <T>array[]* xk1: array in which the solution will be stored in
+        int maxIter: maxiumum itterations
+    Output:
+        none
+
+    A needs to be a SPD matrix wiht no zeros on main diagonal
+    and the linear system needs to have a solution.
+    Tolerance of the solver can be changed in the tol variable below
+
+    */
 
     auto* N = new Matrix<T>(this->rows, this->cols, true);
     auto* D = new Matrix<T>(this->rows, this->cols, true);
-    const int rows_c = (sizeof(b) / sizeof(*b));
-    T output2[rows_c];
-    T* xk2 = output2;
-    T vecvecarray[rows_c];
-    T* pvecvecarray = vecvecarray;
-    T matvecarray[rows_c];
-    T* pmatvecarray = matvecarray;
-    T conve = 12;
 
-    cout << "matrix jacobi";
+
+
+    T* xk2 = new T[this->rows];   // store x_{k+1}
+    T* pvecvecarray = new T[this->rows];   // store vecVecsubtract
+    T* pmatvecarray = new T[this->rows];   // store matVecMult
+    //set solution tolerance to e-8
+    double tol = 1.e-10;
+  
+    // initialize conve varible for first itteration 
+    double conve = 12;
+
 
     this->jacobi_decomposition(D, N);
 
     
-    // init start values
+    // init start values with random values
     for (int i = 0; i < this->rows; i++)
     {
-        xk1[i] = 1;
+        xk1[i] = rand() % 50 + 5;
     }
 
     // x_{k+1} = D(b - N * x_k)
-    while (conve != tol) {
-        for (int n = 0; n < maxIter; n++) {
-            N->matVecMult(xk1, pmatvecarray); // O = N * x_n
-            N->vecVecsubtract(b, pmatvecarray, pvecvecarray); // R = b - O
-            N->matVecMult(pvecvecarray, xk2); // X_{n+1} = D * R
+
+    for (int n = 0; n < maxIter; n++) {
+        N->matVecMult(xk1, pmatvecarray); // K = N * x_n
+        N->vecVecsubtract(b, pmatvecarray, pvecvecarray); // R = b - K
+        D->matVecMult(pvecvecarray, xk2); // X_{n+1} = D * R
+
+        // swap two pointers around
+        std::swap(xk2, xk1);
+        // find RMS norm of output-pout2 array 
+        conve = RMS_norm_diff(xk2, xk1);
+
+        // if rms norm is smaller than tolerance -> break loop
+        if (conve < tol) {
+            break;
         }
     }
+  
 
 
     delete N;
     delete D;
+    delete[] pmatvecarray;
+    delete[] xk2;
+    delete[] pvecvecarray;
 
 }
+
 
 template <class T>
 void Matrix<T>::LUDecomp(Matrix& L, Matrix& U)
