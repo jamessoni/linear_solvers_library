@@ -1,6 +1,8 @@
 #include <iostream>
 #include <math.h>
 #include "Matrix.h"
+#include <float.h> //For DBL_MAX
+#include <numeric>
 #include <vector>
 
 using namespace std;
@@ -12,7 +14,24 @@ void daxpy(int n, double alpha, double *dx, int incx, double *dy, int incy)
    /////#pragma loop(no_vector)
    for (int i = 0; i < n; i++)
    {
-      dy[i * incy] += alpha * dx[i * incy];
+      dy[i * incy] += alpha * dx[i * incx];
+   }
+}
+
+void daxpytx(int n, double alpha, double *dx, int incx, double *dy, int incy)
+{
+   //daxpy but the result is stored in x instead
+   for (int i = 0; i < n; i++)
+   {
+      dx[i * incx] = dy[i*incy] + alpha * dx[i * incx];
+   }
+}
+
+void dcopy(int n, double *dx, int incx, double *dy, int incy)
+{
+   for (int i = 0; i < n; i++)
+   {
+      dy[i * incy] = dx[i * incx];
    }
 
 }
@@ -204,9 +223,7 @@ void Matrix<T>::vecVecsubtract(T* vec_a, T* vec_b, T* output)
     {
 
         output[i] = vec_a[i] - vec_b[i];
-
     }
-
 }
 
 template <class T>
@@ -260,6 +277,7 @@ bool Matrix<T>::SPDMatrixcheck()
     }
     return SPD;
 }
+
 
 template <class T>
 void Matrix<T>::gauss_seidel(Matrix<T>& a, Matrix<T>& b, Matrix<T>& x_init)
@@ -571,36 +589,204 @@ void Matrix<T>::LUDecomp(Matrix& L, Matrix& U)
 }
 
 template <class T>
-void Matrix<T>::LUSolve(double* b, double* output)
+void Matrix<T>::SLUDecomp(Matrix& LU)
 {
-   auto *L = new Matrix<double>(this->rows, this->cols, true);
-   auto *U = new Matrix<double>(this->rows, this->cols, true);
-   this->LUDecomp(*L,*U);
+   //Decompose to a single matrix
 
-   //std::cout<<b[0]<<b[1]<<b[2];
-   int size = 3;
-   double y[3];
-   for (int i = 0; i<size;i++)
+   // Check our dimensions match
+   if (this->cols != LU.cols || this->cols != LU.cols)
    {
-      double sum =0;
-      for (int j = 0; j<size; j++)
-      {
-         sum+= L->values[i*L->cols + j]*y[j];
-      }
-      y[i]=(b[i]-sum)/L->values[i*(L->cols+1)];
+      std::cerr << "L and U must be of the same size as the matrix you want to decompose" << std::endl;
+      return;
    }
 
-   for (int i = size-1; i>=0;i--)
+   // Check if our LU matrix has had space allocated to it
+   if (LU.values != nullptr) 
    {
-      double sum =0;
-      for (int j = 0; j<size; j++)
-      {
-         sum+= U->values[i*U->cols + j]*output[j];
-      }
-
-      output[i]=(y[i]-sum)/U->values[i*(U->cols+1)];
+      LU.values = new T[this->rows * this->cols];
+      // Don't forget to set preallocate to true now it is protected
+      LU.preallocated = true;
    }
 
-   delete L;
-   delete U;
+   // LU = A as a starting point
+   for (int i=0;i<this->size_of_values; i++)
+   {
+      LU.values[i] = this->values[i];
+   }
+
+   for (int step = 0; step<LU.rows; step++)
+   {
+      double factor = 0;
+      for(int i = step+1; i < LU.rows; i++)
+      {
+         factor = LU.values[(i)*LU.cols+step]/LU.values[step*LU.cols+step];
+         daxpy(LU.cols-step,-factor,&LU.values[step*LU.cols+step],1,&LU.values[i*LU.cols+step],1);
+         LU.values[i*cols+step] = factor;
+      }
+   }
+}
+
+template <class T>
+void Matrix<T>::IPLUDecomp()
+{
+   //In place decomposition
+
+   // Check if our LU matrix has had space allocated to it
+   if (this->values == nullptr) 
+   {
+      std::cout << "ERROR. CANNOT DECOMPOSE NON-EXISTING MATRIX";
+   }
+
+   for (int step = 0; step<this->rows; step++)
+   {
+      double factor = 0;
+      for(int i = step+1; i < this->rows; i++)
+      {
+         factor = this->values[(i)*this->cols+step]/this->values[step*this->cols+step];
+         daxpy(this->cols-step,-factor,&this->values[step*this->cols+step],1,&this->values[i*this->cols+step],1);
+         this->values[i*cols+step] = factor;
+      }
+   }
+}
+
+template <class T>
+void Matrix<T>::fsubstitution(Matrix<T>& L, T* y, T* b)
+{
+    for (int i = 0; i<L.cols;i++)
+   {
+      double sum =0;
+      for (int j = 0; j<L.cols; j++)
+      {
+         sum+= L.values[i*L.cols + j]*y[j];
+      }
+      y[i]=(b[i]-sum)/1;
+   }
+}
+
+template <class T>
+void Matrix<T>::bsubstitution(Matrix<T>& U, T* x, T* y)
+{
+   for (int i = U.cols-1; i>=0;i--)
+   {
+      double sum = 0;
+      for (int j = 0; j<U.cols; j++)
+      {
+         sum+= U.values[i*U.cols + j]*x[j];
+      }
+
+      x[i]=(y[i]-sum)/U.values[i*(U.cols+1)];
+   }
+}
+
+template <class T>
+void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
+{
+   //pivoting
+
+   Matrix<T> *LU;
+
+   if (inplace) //inplace decomp
+   {
+      this->IPLUDecomp();
+      LU = this;
+   }
+   else //not inplace decomp
+   {
+      auto *NewLU = new Matrix<T>(this->rows, this->cols, true);
+      this->SLUDecomp(*NewLU);
+      LU = NewLU;
+   }
+
+   //creating y vector for our intermediate step.
+   T y[LU->cols];
+
+   //forward substitution
+   fsubstitution(*LU, y, b);
+
+   //backward substitution
+   bsubstitution(*LU,output,y);
+   
+   
+   if (inplace) //delete LU if new space was allocated
+   {
+      delete LU;
+   }
+}
+
+template <class T>
+void Matrix<T>::conjugate_gradient(T* b, T* x, int maxIter, float tol)
+{
+   int count = 0; //iteration counter
+
+   // PREALLOCATING EVERYTHING. DOES NOT MAKE SENSE TO ALLOCATE EACH LOOP.
+	auto* r = new T[this->cols]; // residual r
+	auto* Ax = new T[this->cols]; // array for storing Ax when calculating residual
+	auto* p = new T[this->cols]; // direction p 
+	auto* Ap = new T[this->cols]; // array for storing Ap when calculating alpha
+   auto* r_old = new T[this->cols]; // r sized array to store the old r when calculating beta
+
+	double alpha; //alpha
+   double anum = 0; // for  r*r dot product, numerator for alpha coefficient 
+	double aden = 0; // denominator for alpha coefficient
+
+   double beta; //beta
+	double bnum = 0; // for r*r dot product, numerator for beta coefficient
+	double bden = 0; // for p(Ap) , denominator for beta coefficient
+	
+	double error = 0;  // error
+
+
+	//// CALCULATING INITIAL r, P AND ERROR
+
+   //calculate residual r = b - Ax
+	this->matVecMult(x, Ax); // Find Ax
+   this->vecVecsubtract(b, Ax, r); //r = b - Ax
+   dcopy(this->cols, r, 1, p, 1); // first p = r
+
+   bnum = inner_product(r,r+this->cols,r,0); //finding inner product of r
+	error = sqrt(bnum / this->cols); //finding error, using RMS
+
+	while (count < maxIter && tol < error)
+	{
+
+      //CALCULATE ALPHA = (r*r)/(p(Ap))
+
+		this->matVecMult(p, Ap); // Finding Ap
+      anum = inner_product(r,r+this->cols,r,0.0); //r*r inner product
+		aden = inner_product(p,p+this->cols,Ap,0.0); //finding (p(Ap))
+		alpha = bnum / aden; // calculating alpha
+
+		// UPDATE X. x = x + ap
+      daxpy(this->cols,alpha,p,1,x,1);
+
+		// UPDATE R. R = R - alpha*(Ap)
+      dcopy(this->cols, r, 1, r_old, 1); // storing r for later use in bden. r_old = r
+      daxpy(this->cols,-alpha,Ap,1,r,1);
+
+		//Calculate Beta
+      bnum = inner_product(r,r+this->cols,r,0.0); //r*r inner product
+		bden = inner_product(r_old,r_old+this->cols,r_old,0.0);
+		beta = bnum / bden; // calculating beta
+
+
+		//Update p = r + beta *p(old)
+      daxpytx(this->cols,beta,p,1,r,1);
+
+	   //Update error
+		error = sqrt(bnum/this->cols); // RMS error 
+
+		// Add 1 to the iteration count
+		count++;
+
+		if (count == maxIter)
+		{
+			break;
+		}
+	}
+
+	delete[] r;
+	delete[] r_old;
+	delete[] Ax;
+	delete[] p;
+	delete[] Ap;
 }

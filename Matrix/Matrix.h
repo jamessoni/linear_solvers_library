@@ -42,7 +42,14 @@ public:
    void jacobi_decomposition(Matrix<T>* D, Matrix<T>* N);
 	
    void LUDecomp(Matrix<T>& L, Matrix<T>& U);
-   void LUSolve(double* b, double* output);
+   void SLUDecomp(Matrix<T>& LU);
+   void IPLUDecomp();
+   
+   void fsubstitution(Matrix<T>& L, T* y,T* b);
+   void bsubstitution(Matrix<T>& U, T* x, T* y);
+
+   void LUSolve(double* b, double* output, bool inplace);
+   void conjugate_gradient(T* b, T* x, int maxIter, float tol);
 
    // Explicitly using the C++11 nullptr here
    T *values = nullptr;   
