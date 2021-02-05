@@ -23,6 +23,9 @@ public:
 	// Perform some operations with our matrix
 	void matVecMult(T* input, T* output);
 
+	float RMS_norm_diff(T* vec_a, T* vec_b);
+
+	void gauss_seidel(CSRMatrix<T>& a, Matrix<T>& b, Matrix<T>& x_init);
 
 	void jacobi_solver_sparse(T* b, T* output, int maxIter, bool initialised);
 

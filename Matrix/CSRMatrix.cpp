@@ -278,3 +278,95 @@ void CSRMatrix<T>::jacobi_solver_sparse(T* b, T* output, int maxIter, bool initi
 
     delete[] pout2;
 }
+
+template <class T>
+float CSRMatrix<T>::RMS_norm_diff(T* vec_a, T* vec_b)
+{
+    // RMS norm of the different of two vectors 
+    // all input vectors/arrays need to be same size
+
+    float sum_a = 0;
+
+    // loop over all values in arraz
+    for (int i = 0; i < this->rows; i++)
+    {
+        // add the squared difference to sum_a
+        sum_a += (vec_a[i] - vec_b[i]) * (vec_a[i] - vec_b[i]);
+
+    }
+
+    // return RMS norm of the squared difference
+    return sqrt(sum_a / this->rows);
+}
+
+template <class T>
+void CSRMatrix<T>::gauss_seidel(CSRMatrix<T>& a, Matrix<T>& b, Matrix<T>& x_init)
+{
+    //   Gauss-seidel implementation
+    //   Method for solving a linear system, Ax = b, where A is a positive definite matrix (sparse matrix)
+    //   Both convergence tolerance and fixed iteration methodologies presented 
+    //   as convergence criteria
+    //   Convergence tolerance and iteration number are predefined in the variables tol and iter_max below.
+
+    double tol = 1e-10;
+    int iter_max = 500;
+    int iter = 0;
+    double conve = 10;
+    double A_ii = 0;
+
+    T* pout2 = new T[x_init.rows];
+
+    //x_init has initialised 0's
+    for (int i = 0; i < x_init.rows; i++)
+    {
+        x_init.values[i] = 0;
+    }
+
+    while (conve > tol)
+        //while (iter < iter_max)
+    {
+        iter += 1;
+        std::cout << "\niteration: " << iter;
+        //updating pout2 as previous iteration x.values
+        //enables convergence parameter to be checked against predefined tolerance
+        for (int i = 0; i < x_init.rows; i++)
+        {
+            pout2[i] = x_init.values[i];
+        }
+
+        for (int i = 0; i < this->rows; i++)
+        {
+
+            //A_ii = 0;
+            //looping through diagonal entries for A_ii
+            for (int val_index = a.row_position[i]; val_index < a.row_position[i + 1]; val_index++)
+            {
+
+                if (a.col_index[val_index] == i)
+                {
+                    A_ii = a.values[val_index];
+                    //once A_ii its value stored - break to prevent overwriting
+                    if (A_ii != 0)
+                    {
+                        break;
+                    }
+                }
+            }
+            x_init.values[i] = b.values[i] / A_ii;
+            //using compressed sparse row matVecMult 
+            for (int val_index = a.row_position[i]; val_index < a.row_position[i + 1]; val_index++)
+            {
+                if (a.col_index[val_index] == i)
+                {
+                    continue;
+                }
+                x_init.values[i] = x_init.values[i] - (a.values[val_index] * x_init.values[col_index[val_index]]) / A_ii;
+            }
+        }
+        conve = RMS_norm_diff(pout2, x_init.values);
+        std::cout << "\nconvergence values: " << conve;
+    }
+    std::cout << std::endl;
+
+    delete[] pout2;
+  }
