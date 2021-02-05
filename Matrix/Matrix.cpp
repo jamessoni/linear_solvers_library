@@ -282,74 +282,74 @@ bool Matrix<T>::SPDMatrixcheck()
 template <class T>
 void Matrix<T>::gauss_seidel(Matrix<T>& a, Matrix<T>& b, Matrix<T>& x_init)
 {
-    //Both convergence tolerance and fixed iteration methodologies presented
-    //design decision that although set iteration gives a good method for
-    // large matrices. For small matrices it may not be the most effective
+    //   Gauss-seidel implementation
+    //   Method for solving a linear system, Ax = b, where A is a positive definite matrix
+    //   Both convergence tolerance and fixed iteration methodologies presented 
+    //   as convergence criteria
+    //   Convergence tolerance and iteration number are predefined in the variables tol and iter_max below.
 
     double tol = 1e-5;
-    int iter_max = 1500;
+    int iter_max = 500;
     int iter = 0;
     double conve = 10;
 
     T* pout2 = new T[x_init.rows];
 
-    std::shared_ptr<Matrix<T>> y(new Matrix<T>(x_init.rows, x_init.cols, true));
-    //filling y
-     for (int i = 0; i < y->rows * y->cols; i++)
+    for (int i = 0; i < x_init.rows * x_init.cols; i++)
     {
-        y->values[i] = 0;
+        x_init.values[i] = 0;
     }
 
-    // std::shared_ptr<Matrix<T>> x(new Matrix<T>(x_init.rows, x_init.cols, true));
+    while (conve > tol)
+    {
+        iter += 1;
+        std::cout << "\niteration: " << iter;
+        for (int i = 0; i < x_init.rows; i++)
+        {
+            pout2[i] = x_init.values[i];
+        }
 
-     while (conve > tol)
-     {
-         iter += 1;
-         for (int i = 0; i < x_init.rows; i++)
-         {
-             pout2[i] = x_init.values[i];
-         }
+        for (int i = 0; i < this->rows; i++)
+        {
+            x_init.values[i] = b.values[i] / a.values[i * rows + i];
+            for (int j = 0; j < this->cols; j++)
+            {
+                if (i == j)
+                {
+                    continue;
+                }
+                x_init.values[i] = x_init.values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
+            }
+        }
+        conve = RMS_norm_diff(pout2, x_init.values);
+        std::cout << "\nconvergence values: " << conve;
+    }
+    std::cout << std::endl;
 
-         for (int i = 0; i < this->rows; i++)
-         {
-             y->values[i] = b.values[i] / a.values[i * rows + i];
-             for (int j = 0; j < this->cols; j++)
-             {
-                 if (i == j)
-                 {
-                     continue;
-                 }
-                 y->values[i] = y->values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
-                 x_init.values[i] = y->values[i];
-             }
-         }
-         conve = RMS_norm_diff(pout2, x_init.values);
-     }
-    
-     delete[] pout2;
+    delete[] pout2;
 
-    // Same implementation as above which is only based off number of iterations
-
+    //Same implementation as above using a predefined iteration number
     //while (iter_max > 0)
     //{
-    //    //for (int i = 0;x->values[i] = x_init[i];
+    //    
     //    for (int i = 0; i < this->rows; i++)
     //    {
-    //        y->values[i] = b.values[i] / a.values[i * rows + i];
+    //        x_init.values[i] = b.values[i] / a.values[i * rows + i];
     //        for (int j = 0; j < this->cols; j++)
     //        {
     //            if (i == j)
     //            {
     //                continue;
     //            }
-    //            y->values[i] = y->values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
-    //            x_init.values[i] = y->values[i];
+    //           x_init.values[i] = x_init.values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
     //        }
     //    }   
     //    iter -= 1;
     //}  
     //std::cout << std::endl;
 
+     //delete[] pout2;
+     
 }
 
 
