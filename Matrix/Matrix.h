@@ -41,7 +41,7 @@ public:
    void jacobi_decomposition(Matrix<T>* D, Matrix<T>* N);
 	
    void LUDecomp(Matrix<T>& L, Matrix<T>& U);
-   void SLUDecomp(Matrix<T>& LU);
+   void SLUDecomp(Matrix<T>* LU);
    void IPLUDecomp();
    
    void fsubstitution(Matrix<T>& L, T* y,T* b);
