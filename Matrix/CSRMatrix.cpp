@@ -369,5 +369,4 @@ void CSRMatrix<T>::gauss_seidel(CSRMatrix<T>& a, Matrix<T>& b, Matrix<T>& x_init
     std::cout << std::endl;
 
     delete[] pout2;
-
-}
+  }

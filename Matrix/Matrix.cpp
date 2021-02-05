@@ -69,7 +69,7 @@ diag_max(diag_max), diag_min(diag_min), non_diag_max(non_diag_max), non_diag_min
             }
             else
             {
-                this->values[i * cols + j] = 1;
+                this->values[i * cols + j] = (rand() % 2) + 0;
             }
         }
     }
@@ -282,73 +282,74 @@ bool Matrix<T>::SPDMatrixcheck()
 template <class T>
 void Matrix<T>::gauss_seidel(Matrix<T>& a, Matrix<T>& b, Matrix<T>& x_init)
 {
-    //   Gauss-seidel implementation
-    //   Method for solving a linear system, Ax = b, where A is a positive definite matrix
-    //   Both convergence tolerance and fixed iteration methodologies presented 
-    //   as convergence criteria
-    //   Convergence tolerance and iteration number are predefined in the variables tol and iter_max below.
+    //Both convergence tolerance and fixed iteration methodologies presented
+    //design decision that although set iteration gives a good method for
+    // large matrices. For small matrices it may not be the most effective
 
     double tol = 1e-5;
-    int iter_max = 500;
+    int iter_max = 1500;
     int iter = 0;
     double conve = 10;
 
     T* pout2 = new T[x_init.rows];
 
-    for (int i = 0; i < x_init.rows * x_init.cols; i++)
+    std::shared_ptr<Matrix<T>> y(new Matrix<T>(x_init.rows, x_init.cols, true));
+    //filling y
+     for (int i = 0; i < y->rows * y->cols; i++)
     {
-        x_init.values[i] = 0;
+        y->values[i] = 0;
     }
 
-    while (conve > tol)
-    {
-        iter += 1;
-        std::cout << "\niteration: " << iter;
-        for (int i = 0; i < x_init.rows; i++)
-        {
-            pout2[i] = x_init.values[i];
-        }
+    // std::shared_ptr<Matrix<T>> x(new Matrix<T>(x_init.rows, x_init.cols, true));
 
-        for (int i = 0; i < this->rows; i++)
-        {
-            x_init.values[i] = b.values[i] / a.values[i * rows + i];
-            for (int j = 0; j < this->cols; j++)
-            {
-                if (i == j)
-                {
-                    continue;
-                }
-                x_init.values[i] = x_init.values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
-            }
-        }
-        conve = RMS_norm_diff(pout2, x_init.values);
-        std::cout << "\nconvergence values: " << conve;
-    }
-    std::cout << std::endl;
+     while (conve > tol)
+     {
+         iter += 1;
+         for (int i = 0; i < x_init.rows; i++)
+         {
+             pout2[i] = x_init.values[i];
+         }
 
-    delete[] pout2;
+         for (int i = 0; i < this->rows; i++)
+         {
+             y->values[i] = b.values[i] / a.values[i * rows + i];
+             for (int j = 0; j < this->cols; j++)
+             {
+                 if (i == j)
+                 {
+                     continue;
+                 }
+                 y->values[i] = y->values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
+                 x_init.values[i] = y->values[i];
+             }
+         }
+         conve = RMS_norm_diff(pout2, x_init.values);
+     }
+    
+     delete[] pout2;
 
-    //Same implementation as above using a predefined iteration number
+    // Same implementation as above which is only based off number of iterations
+
     //while (iter_max > 0)
     //{
-    //    
+    //    //for (int i = 0;x->values[i] = x_init[i];
     //    for (int i = 0; i < this->rows; i++)
     //    {
-    //        x_init.values[i] = b.values[i] / a.values[i * rows + i];
+    //        y->values[i] = b.values[i] / a.values[i * rows + i];
     //        for (int j = 0; j < this->cols; j++)
     //        {
     //            if (i == j)
     //            {
     //                continue;
     //            }
-    //           x_init.values[i] = x_init.values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
+    //            y->values[i] = y->values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
+    //            x_init.values[i] = y->values[i];
     //        }
     //    }   
     //    iter -= 1;
     //}  
     //std::cout << std::endl;
 
-     //delete[] pout2;
 }
 
 
@@ -563,7 +564,7 @@ void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, bool 
 
 
 template <class T>
-void Matrix<T>::LUDecomp(Matrix& L, Matrix& U)
+void Matrix<T>::LUDecomp(Matrix<T>& L, Matrix<T>& U)
 {
 
    // Check our dimensions match
@@ -609,58 +610,49 @@ void Matrix<T>::LUDecomp(Matrix& L, Matrix& U)
 
    for (int step = 0; step<U.rows; step++)
    {
-      double factor = 0;
+      double factor = 0; //factor by which to multiply the pivot row before adding it
       for(int i = step+1; i < U.rows; i++)
       {
          factor = U.values[(i)*U.cols+step]/U.values[step*U.cols+step];
-         //std::cout << "x: " << U.values[step*U.cols] << " y: "<< U.values[i*U.cols] << " n: " << U.cols-step << " factor: " << factor << "\n";
-         
          daxpy(U.cols-step,-factor,&U.values[step*U.cols+step],1,&U.values[i*U.cols+step],1);
-         
-         //U.printMatrix();
-         // for(int j = step; j < U.cols; j++)
-         // {
-         //    //U.values[i*U.cols+j] -= U.values[step*U.cols+j]*factor;
-         // }         
          L.values[i*cols+step] = factor;
       }
    }
 }
 
 template <class T>
-void Matrix<T>::SLUDecomp(Matrix& LU)
+void Matrix<T>::SLUDecomp(Matrix<T>* LU)
 {
    //Decompose to a single matrix
 
    // Check our dimensions match
-   if (this->cols != LU.cols || this->cols != LU.cols)
+   if (this->cols != LU->cols || this->cols != LU->cols)
    {
       std::cerr << "L and U must be of the same size as the matrix you want to decompose" << std::endl;
       return;
    }
 
    // Check if our LU matrix has had space allocated to it
-   if (LU.values != nullptr) 
+   if (LU->values != nullptr) 
    {
-      LU.values = new T[this->rows * this->cols];
+      LU->values = new T[this->rows * this->cols];
       // Don't forget to set preallocate to true now it is protected
-      LU.preallocated = true;
+      LU->preallocated = true;
    }
 
    // LU = A as a starting point
    for (int i=0;i<this->size_of_values; i++)
    {
-      LU.values[i] = this->values[i];
+      LU->values[i] = this->values[i];
    }
-
-   for (int step = 0; step<LU.rows; step++)
+   for (int step = 0; step<LU->rows; step++)
    {
       double factor = 0;
-      for(int i = step+1; i < LU.rows; i++)
+      for(int i = step+1; i < LU->rows; i++)
       {
-         factor = LU.values[(i)*LU.cols+step]/LU.values[step*LU.cols+step];
-         daxpy(LU.cols-step,-factor,&LU.values[step*LU.cols+step],1,&LU.values[i*LU.cols+step],1);
-         LU.values[i*cols+step] = factor;
+         factor = LU->values[(i)*LU->cols+step]/LU->values[step*LU->cols+step];
+         daxpy(LU->cols-step,-factor,&LU->values[step*LU->cols+step],1,&LU->values[i*LU->cols+step],1);
+         LU->values[i*cols+step] = factor;
       }
    }
 }
@@ -690,7 +682,7 @@ void Matrix<T>::IPLUDecomp()
 
 template <class T>
 void Matrix<T>::fsubstitution(Matrix<T>& L, T* y, T* b)
-{
+{  
     for (int i = 0; i<L.cols;i++)
    {
       double sum =0;
@@ -732,8 +724,13 @@ void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
    else //not inplace decomp
    {
       auto *NewLU = new Matrix<T>(this->rows, this->cols, true);
-      this->SLUDecomp(*NewLU);
+      this->SLUDecomp(NewLU);
       LU = NewLU;
+   }
+
+   for(int i = 0; i<LU->cols;i++)
+   {
+      output[i] = 0;
    }
 
    //creating y vector for our intermediate step.
@@ -756,7 +753,6 @@ template <class T>
 void Matrix<T>::conjugate_gradient(T* b, T* x, int maxIter, float tol)
 {
    int count = 0; //iteration counter
-
    // PREALLOCATING EVERYTHING. DOES NOT MAKE SENSE TO ALLOCATE EACH LOOP.
 	auto* r = new T[this->cols]; // residual r
 	auto* Ax = new T[this->cols]; // array for storing Ax when calculating residual
@@ -782,26 +778,25 @@ void Matrix<T>::conjugate_gradient(T* b, T* x, int maxIter, float tol)
    this->vecVecsubtract(b, Ax, r); //r = b - Ax
    dcopy(this->cols, r, 1, p, 1); // first p = r
 
+   
    bnum = inner_product(r,r+this->cols,r,0); //finding inner product of r
 	error = sqrt(bnum / this->cols); //finding error, using RMS
 
 	while (count < maxIter && tol < error)
 	{
-
       //CALCULATE ALPHA = (r*r)/(p(Ap))
-
 		this->matVecMult(p, Ap); // Finding Ap
       anum = inner_product(r,r+this->cols,r,0.0); //r*r inner product
 		aden = inner_product(p,p+this->cols,Ap,0.0); //finding (p(Ap))
-		alpha = bnum / aden; // calculating alpha
-
+		alpha = anum / aden; // calculating alpha
+      
 		// UPDATE X. x = x + ap
       daxpy(this->cols,alpha,p,1,x,1);
 
 		// UPDATE R. R = R - alpha*(Ap)
       dcopy(this->cols, r, 1, r_old, 1); // storing r for later use in bden. r_old = r
       daxpy(this->cols,-alpha,Ap,1,r,1);
-
+ 
 		//Calculate Beta
       bnum = inner_product(r,r+this->cols,r,0.0); //r*r inner product
 		bden = inner_product(r_old,r_old+this->cols,r_old,0.0);
@@ -816,7 +811,7 @@ void Matrix<T>::conjugate_gradient(T* b, T* x, int maxIter, float tol)
 
 		// Add 1 to the iteration count
 		count++;
-
+      
 		if (count == maxIter)
 		{
 			break;
