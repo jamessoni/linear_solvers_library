@@ -176,13 +176,13 @@ void CSRMatrix<T>::dense2sparse(Matrix<T>& tosparsify, CSRMatrix<T>* output)
 
 }
 
-
 template <class T>
-void CSRMatrix<T>::jacobi_solver_sparse(T* b, T* output, int maxIter, bool initialised) {
+void CSRMatrix<T>::jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* output, int maxIter, bool initialised, float tol) {
     /*
-    Jacobi solver using element-wise calcualtions
-    Solves a linear system of equations A*x=b using an ittertive apporach
+    Jacobi solver using a CSR sparse matrix 
+    Solves a linear system of equations A*x=b using an iterative apporach
     Input:
+        CSRMatrix<T>* A: A matrix of linear system
         <T>array[]* b: RHS of the linear system
         <T>array[]* output: array in which the solution will be stored in
         int maxIter: maxiumum itterations
@@ -193,27 +193,26 @@ void CSRMatrix<T>::jacobi_solver_sparse(T* b, T* output, int maxIter, bool initi
 
     A needs to be a SPD matrix wiht no zeros on main diagonal
     and the linear system needs to have a solution.
-    Tolerance of the solver can be changed in the tol variable below
 
     */
 
 
     // create variables 
     double conve = 10;   // store RMS difference between x_{k} and x_{k+1}
-    T* pout2 = new T[this->rows];   // store x_{k+1}
+    T* pout2 = new T[A->rows];   // store x_{k+1}
     float sum = 0;
-    int j_index = 0;
     double a_ii = 0;
-    double sum_RMS = 0;
+    double RMS = 12;
+    double* answer_check = new double[A->rows];
     //set solution tolerance to e-10
-    double tol = 1.e-10;
+ 
 
 
     // if not initialised fist input than use random numbers to 
     // initialise x_{k}
     if (initialised == false) {
         // initialise starting condition x_{k} 
-        for (int i = 0; i < this->rows; i++)
+        for (int i = 0; i < A->rows; i++)
         {
             output[i] = rand() % 500 + 50;
         }
@@ -223,41 +222,31 @@ void CSRMatrix<T>::jacobi_solver_sparse(T* b, T* output, int maxIter, bool initi
     // start iteration, only do maxIter steps 
     for (int n = 0; n < maxIter; n++) {
         // loop over rows
-        for (int i = 0; i < this->rows; i++) {
+        for (int i = 0; i < A->rows; i++) {
             // set variable to zero such that it can be added to 
             sum = 0;
-            j_index = 0;
             // loop over non zero values in row
-            for (int j = this->row_position[i]; j < this->row_position[i + 1]; j++) {
+            for (int j = A->row_position[i]; j < A->row_position[i + 1]; j++) {
                 // if i = j dont do anything because that is row value that is calcualted
                 // for i not equal to j, mutiply both values and add to sum
-                if (this->col_index[j] != i) {
-                    //cout << "this->values[j] " << this->values[j] << "  j  " << j_index << " output[j] " << output[j_index] << endl;
-                    sum += this->values[j] * output[j_index];
+                if (A->col_index[j] != i) {
+                    sum += A->values[j] * output[A->col_index[j]];
                 }
 
-                if (this->col_index[j] == i) {
-                    a_ii = this->values[j];
+                if (A->col_index[j] == i) {
+                    a_ii = A->values[j];
                 }
+                // increase j index 
 
-                j_index++;
             }
             // put the sum value in the right spot in the array with some additonal calculations
-            //cout << "b[i] " << b[i] << "  sum " << sum << endl;
             pout2[i] = (1 / (a_ii)) * (b[i] - sum);
-            //cout << " pout2 cal " << pout2[i] << endl;
         }
 
-        // set RMS norm summation varible to zero
-        sum_RMS = 0;
 
         // loop over all values in arraz
-        for (int i = 0; i < this->rows; i++) {
+        for (int i = 0; i < A->rows; i++) {
 
-            //cout << pout2[i] << "  " << output[i] << endl;
-            // add the squared difference to sum_a for the RMS convergence between the
-            // different itterations
-            sum_RMS += (pout2[i] - output[i]) * (pout2[i] - output[i]);
 
             // copy values into new array for next itteration
             output[i] = pout2[i];
@@ -265,19 +254,22 @@ void CSRMatrix<T>::jacobi_solver_sparse(T* b, T* output, int maxIter, bool initi
 
         }
 
-        // RMS norm of the squared difference
-        conve = sqrt(sum_RMS / this->rows);
 
-        //cout << "N " << n << " conve : " << conve << endl;
+        A->matVecMult(output, answer_check);
+        RMS = A->RMS_norm_diff(b, answer_check);
 
-        // if rms norm is smaller than tolerance -> break loop
-        if (conve < tol) {
+        // if rms norm is smaller than tolerance -> break lool
+        if (RMS < tol) {
             break;
         }
+
+
     }
 
     delete[] pout2;
+    delete[] answer_check; 
 }
+
 
 template <class T>
 float CSRMatrix<T>::RMS_norm_diff(T* vec_a, T* vec_b)
