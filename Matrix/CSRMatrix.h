@@ -25,9 +25,9 @@ public:
 
 	float RMS_norm_diff(T* vec_a, T* vec_b);
 
-	void gauss_seidel(CSRMatrix<T>& a, Matrix<T>& b, Matrix<T>& x_init);
+	void gauss_seidel_sparse(CSRMatrix<T>& a, T* b, T* x_init, float tol);
 
-	void jacobi_solver_sparse(T* b, T* output, int maxIter, bool initialised);
+	void jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* output, int maxIter, bool initialised, float tol);
 
 
 	// Explicitly using the C++11 nullptr here

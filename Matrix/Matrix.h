@@ -27,17 +27,17 @@ public:
    bool SPDMatrixcheck();
 
    //Gauss-seidel solver
-   void gauss_seidel(Matrix<T>& a, Matrix<T>& b, Matrix<T>& x);
+   void gauss_seidel(Matrix<T>& a, T* b, T* x, float tol);
 
    void matVecMult(T* vec, T* output);
    void vecVecsubtract(T* vec_a, T* vec_b, T* output);
    float RMS_norm_diff(T* vec_a, T* vec_b);
 
    // Jacobi solver element-wise
-   void jacobi_solver_element(T* b, T* output, int maxIter, bool initialised);
+   void jacobi_solver_element(T* b, T* output, int maxIter, bool initialised, float tol);
 
    // Functions for Jacobi solver matrix
-   void jacobi_solver_matrix(double* b, double* output, int maxIter, bool initialised);
+   void jacobi_solver_matrix(double* b, double* output, int maxIter, bool initialised, float tol);
    void jacobi_decomposition(Matrix<T>* D, Matrix<T>* N);
 	
    void LUDecomp(Matrix<T>& L, Matrix<T>& U);
@@ -49,6 +49,11 @@ public:
 
    void LUSolve(double* b, double* output, bool inplace);
    void conjugate_gradient(T* b, T* x, int maxIter, float tol);
+
+   void daxpy(int n, double alpha, double* dx, int incx, double* dy, int incy);
+   void daxpytx(int n, double alpha, double* dx, int incx, double* dy, int incy);
+   void dcopy(int n, double* dx, int incx, double* dy, int incy);
+
 
    // Explicitly using the C++11 nullptr here
    T *values = nullptr;   

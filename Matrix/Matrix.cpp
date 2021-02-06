@@ -7,32 +7,34 @@
 
 using namespace std;
 
-void daxpy(int n, double alpha, double *dx, int incx, double *dy, int incy)
+template <class T>
+void Matrix<T>::daxpy(int n, double alpha, double* dx, int incx, double* dy, int incy)
 {
 
-   // Let's ignore the incx and incy for now
-   /////#pragma loop(no_vector)
-   for (int i = 0; i < n; i++)
-   {
-      dy[i * incy] += alpha * dx[i * incx];
-   }
+    // Let's ignore the incx and incy for now
+    /////#pragma loop(no_vector)
+    for (int i = 0; i < n; i++)
+    {
+        dy[i * incy] += alpha * dx[i * incx];
+    }
 }
 
-void daxpytx(int n, double alpha, double *dx, int incx, double *dy, int incy)
+template <class T>
+void Matrix<T>::daxpytx(int n, double alpha, double* dx, int incx, double* dy, int incy)
 {
-   //daxpy but the result is stored in x instead
-   for (int i = 0; i < n; i++)
-   {
-      dx[i * incx] = dy[i*incy] + alpha * dx[i * incx];
-   }
+    //daxpy but the result is stored in x instead
+    for (int i = 0; i < n; i++)
+    {
+        dx[i * incx] = dy[i * incy] + alpha * dx[i * incx];
+    }
 }
-
-void dcopy(int n, double *dx, int incx, double *dy, int incy)
+template <class T>
+void Matrix<T>::dcopy(int n, double* dx, int incx, double* dy, int incy)
 {
-   for (int i = 0; i < n; i++)
-   {
-      dy[i * incy] = dx[i * incx];
-   }
+    for (int i = 0; i < n; i++)
+    {
+        dy[i * incy] = dx[i * incx];
+    }
 
 }
 
@@ -53,11 +55,12 @@ template <class T>
 Matrix<T>::Matrix(int rows, int cols, T *values_ptr): rows(rows), cols(cols), size_of_values(rows * cols), values(values_ptr)
 {}
 
-////Constructor - creating the SPD matrix
+//Constructor - creating the SPD matrix
 template <class T>
 Matrix<T>::Matrix(int rows, int cols, int diag_max, int diag_min) : rows(rows), cols(cols),
 diag_max(diag_max), diag_min(diag_min), non_diag_max(non_diag_max), non_diag_min(non_diag_min), size_of_values(rows* cols), preallocated(true)
 {
+
     this->values = new T[this->rows * this->cols];
     for (int i = 0; i < rows; i++)
     {
@@ -65,11 +68,15 @@ diag_max(diag_max), diag_min(diag_min), non_diag_max(non_diag_max), non_diag_min
         {
             if (i == j)
             {
+                // updating Matrix values on the diagonal - 
+                // enabling Diagonal Dominance
                 this->values[i * cols + j] = (rand() % diag_max) + diag_min;
             }
             else
             {
-                this->values[i * cols + j] = (rand() % 2) + 0;
+                // updating Matrix off-diagonal elements -
+                // ensuring symmetry
+                this->values[i * cols + j] = 1;
             }
         }
     }
@@ -229,22 +236,25 @@ void Matrix<T>::vecVecsubtract(T* vec_a, T* vec_b, T* output)
 template <class T>
 bool Matrix<T>::SPDMatrixcheck()
 {
-    //this method returns true if the matrix is symmetric 
-    // AND the sum of the non diagonal entries of the row
-    // is less than the smallest diagonal entry
+    /*  This method returns true if the matrix is Symmetric 
+        and Diagonal Dominance occurs (the sum of the non diagonal entries of the row
+        is less than the smallest diagonal entry)
+    */
 
     int sum_nondiag{};
     int diag_val{};
     bool SPD{ false };
-    //bool weak_test{ false };
 
-    //testing for symmetry in matrix
+    //criteria 1. testing for symmetry in matrix
     for (int i = 0; i < rows; i++){
         for (int j = 0; j < cols; j++){
-            if (i == j){
+            if (i == j)
+            {
                 continue;
             }
             else{
+                // updating SPD bool condition as we loop over symmetric
+                // elements within the Matrix
                 if (this->values[i * rows + j] == this->values[j * cols + i]){
                     SPD = true;
                 }
@@ -254,10 +264,12 @@ bool Matrix<T>::SPDMatrixcheck()
             }
         }
     }
-    //SPD test (weak) that enables convergence to occur
+    //criteria 2. SPD test (weak) that enables convergence to occur 
+    //            with certain solvers
     for (int i = 0; i < rows; i++){
         for (int j = 0; j < cols; j++){
             if (i == j){
+                //ensuring Diagonal 
                 diag_val = this->values[i * rows + j];
                 continue;
             }
@@ -280,81 +292,99 @@ bool Matrix<T>::SPDMatrixcheck()
 
 
 template <class T>
-void Matrix<T>::gauss_seidel(Matrix<T>& a, Matrix<T>& b, Matrix<T>& x_init)
+void Matrix<T>::gauss_seidel(Matrix<T>& a, T* b, T* x, float tol)
 {
-    //   Gauss-seidel implementation
-    //   Method for solving a linear system, Ax = b, where A is a positive definite matrix
-    //   Both convergence tolerance and fixed iteration methodologies presented 
-    //   as convergence criteria
-    //   Convergence tolerance and iteration number are predefined in the variables tol and iter_max below.
 
-    double tol = 1e-5;
-    int iter_max = 500;
+    /*
+    Gauss-seidel solver implementation
+        Solves a linear system of equations A * x = b using an iterative apporach
+        Input :
+            <T>array[] * a : SPD Matrix input
+            <T>array[] * b : RHS of the linear system
+            <T>array[] * x_init : array in which the solution will be stored in
+            double tol : tolerance of the solver
+
+        Output :
+            none
+
+        A needs to be a Diagonal Dominant / SPD matrix with no zeros on main diagonal
+        and the linear system needs to have a solution.
+        For gauss-seidel to be ran on maximum iterations - uncomment section below.
+        int iter_max : maximum number of iterations can be altered below
+
+    */
+     
     int iter = 0;
     double conve = 10;
 
-    T* pout2 = new T[x_init.rows];
-
-    for (int i = 0; i < x_init.rows * x_init.cols; i++)
+    T* pout2 = new T[this->rows];
+    
+    for (int i = 0; i < this->rows; i++)
     {
-        x_init.values[i] = 0;
+        x[i] = 0;
     }
 
     while (conve > tol)
     {
         iter += 1;
-        std::cout << "\niteration: " << iter;
-        for (int i = 0; i < x_init.rows; i++)
-        {
-            pout2[i] = x_init.values[i];
-        }
-
+        //std::cout << "\niteration: " << iter;
+        //updating pout2 as previous iteration x.values
+        //enables convergence paramter to be checked against predefined tolerance
         for (int i = 0; i < this->rows; i++)
         {
-            x_init.values[i] = b.values[i] / a.values[i * rows + i];
+            pout2[i] = x[i];
+        }
+        //looping of rows of A
+        for (int i = 0; i < this->rows; i++)
+        {
+            x[i] = b[i] / a.values[i * this->rows + i];
+            //looping over cols of A
+            for (int j = 0; j < this->cols; j++)
+            {
+                //skips over summation where (i==j)
+                if (i == j)
+                {
+                    continue;
+                }
+                //computing x[i] = x[i] - (A[i][j] / A[i][i])*x[j]
+                x[i] = x[i] - ((a.values[i * this->rows + j] / a.values[i * this->rows + i]) * x[j]);
+            }
+        }
+        conve = RMS_norm_diff(pout2, x);
+        //std::cout << "\nconvergence values: " << conve;
+    }
+
+    delete[] pout2;
+    /*
+    // Gauss-seidel implementation with convergence criteria 
+    // using a predefined iteration number iter_max
+
+    int iter_max = 500;
+    while (iter_max > 0)
+    {
+        
+        for (int i = 0; i < this->rows; i++)
+        {
+            x[i] = b[i] / a[i * rows + i];
             for (int j = 0; j < this->cols; j++)
             {
                 if (i == j)
                 {
                     continue;
                 }
-                x_init.values[i] = x_init.values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
+               x[i] = x[i] - ((a[i * rows + j] / a[i * rows + i]) * x[j]);
             }
-        }
-        conve = RMS_norm_diff(pout2, x_init.values);
-        std::cout << "\nconvergence values: " << conve;
-    }
-    std::cout << std::endl;
+        }   
+        iter -= 1;
+    }  
 
     delete[] pout2;
-
-    //Same implementation as above using a predefined iteration number
-    //while (iter_max > 0)
-    //{
-    //    
-    //    for (int i = 0; i < this->rows; i++)
-    //    {
-    //        x_init.values[i] = b.values[i] / a.values[i * rows + i];
-    //        for (int j = 0; j < this->cols; j++)
-    //        {
-    //            if (i == j)
-    //            {
-    //                continue;
-    //            }
-    //           x_init.values[i] = x_init.values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
-    //        }
-    //    }   
-    //    iter -= 1;
-    //}  
-    //std::cout << std::endl;
-
-     //delete[] pout2;
-     
+    */
 }
 
 
 template <class T>
-void Matrix<T>::jacobi_solver_element(T* b, T* output, int maxIter, bool initialised) {
+void Matrix<T>::jacobi_solver_element(T* b, T* output, int maxIter, bool initialised, float tol) {
     /*
     Jacobi solver using element-wise calcualtions
     Solves a linear system of equations A*x=b using an ittertive apporach
@@ -380,8 +410,6 @@ void Matrix<T>::jacobi_solver_element(T* b, T* output, int maxIter, bool initial
     float sum = 0;
     int n = 0;
     double sum_RMS = 0;
-    //set solution tolerance to e-10
-    double tol = 1.e-10;
 
 
     // if not initialised fist input than use random numbers to 
@@ -479,7 +507,7 @@ void  Matrix<T>::jacobi_decomposition(Matrix<T>* D, Matrix<T>* N) {
 
 
 template <class T>
-void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, bool initialised) {
+void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, bool initialised, float tol) {
     /*
     Jacobi solver using matrix manipulation
     Solves a linear system of equations A*x=b using an ittertive apporach, where every itteration
@@ -507,8 +535,6 @@ void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, bool 
     T* xk2 = new T[this->rows];   // store x_{k+1}
     T* pvecvecarray = new T[this->rows];   // store vecVecsubtract
     T* pmatvecarray = new T[this->rows];   // store matVecMult
-    //set solution tolerance to e-10
-    double tol = 1.e-10;
 
     // initialize conve varible for first itteration 
     double conve = 12;
@@ -735,7 +761,7 @@ void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
 
    //creating y vector for our intermediate step.
    T y[LU->cols];
-
+   //auto* y = new T[this->cols]
    //forward substitution
    fsubstitution(*LU, y, b);
 
@@ -747,6 +773,7 @@ void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
    {
       delete LU;
    }
+   delete y;
 }
 
 template <class T>
