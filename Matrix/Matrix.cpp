@@ -12,7 +12,6 @@ void Matrix<T>::daxpy(int n, double alpha, double* dx, int incx, double* dy, int
 {
 
     // Let's ignore the incx and incy for now
-    /////#pragma loop(no_vector)
     for (int i = 0; i < n; i++)
     {
         dy[i * incy] += alpha * dx[i * incx];
@@ -55,7 +54,7 @@ template <class T>
 Matrix<T>::Matrix(int rows, int cols, T *values_ptr): rows(rows), cols(cols), size_of_values(rows * cols), values(values_ptr)
 {}
 
-//Constructor - creating the SPD matrix
+//Constructor - creating an SPD matrix
 template <class T>
 Matrix<T>::Matrix(int rows, int cols, int diag_max, int diag_min) : rows(rows), cols(cols),
 diag_max(diag_max), diag_min(diag_min), non_diag_max(non_diag_max), non_diag_min(non_diag_min), size_of_values(rows* cols), preallocated(true)
@@ -104,7 +103,7 @@ void Matrix<T>::printValues()
    std::cout << std::endl;
 }
 
-// Explicitly print out the values in values array as if they are a matrix
+// Explicitly print out the values in values array as if they were a matrix
 template <class T>
 void Matrix<T>::printMatrix() 
 { 
@@ -124,7 +123,7 @@ void Matrix<T>::printMatrix()
 // Do matrix matrix multiplication
 // output = this * mat_right
 template <class T>
-void Matrix<T>::matMatMult(Matrix& mat_left, Matrix& output)
+void Matrix<T>::matMatMult(Matrix& mat_right, Matrix& output)
 {
 
    // Check our dimensions match
@@ -138,7 +137,7 @@ void Matrix<T>::matMatMult(Matrix& mat_left, Matrix& output)
    if (output.values != nullptr) 
    {
       // Check our dimensions match
-      if (this->rows != mat_left.cols || mat_left.rows != output.rows)
+      if (this->rows != mat_right.cols || mat_right.rows != output.rows)
       {
          std::cerr << "Input dimensions for matrices don't match" << std::endl;
          return;
@@ -147,7 +146,7 @@ void Matrix<T>::matMatMult(Matrix& mat_left, Matrix& output)
    // The output hasn't been preallocated, so we are going to do that
    else
    {
-      output.values = new T[this->rows * mat_left.cols];
+      output.values = new T[this->rows * mat_right.cols];
       // Don't forget to set preallocate to true now it is protected
       output.preallocated = true;
    }
@@ -159,16 +158,13 @@ void Matrix<T>::matMatMult(Matrix& mat_left, Matrix& output)
    }
 
    // Now we can do our matrix-matrix multiplication
-   // CHANGE THIS FOR LOOP ORDERING AROUND
-   // AND CHECK THE TIME SPENT
-   // Does the ordering matter for performance. Why??
    for(int i = 0; i < this->rows; i++)
    {
       for(int k = 0; k < this->cols; k++)
       {
-         for(int j = 0; j < mat_left.cols; j++)
+         for(int j = 0; j < mat_right.cols; j++)
          {            
-               output.values[i * output.cols + j] += this->values[i * this->cols + k] * mat_left.values[k * mat_left.cols + j];
+               output.values[i * output.cols + j] += this->values[i * this->cols + k] * mat_right.values[k * mat_right.cols + j];
          }
       }
    }
@@ -350,36 +346,19 @@ void Matrix<T>::gauss_seidel(Matrix<T>& a, T* b, T* x, float tol)
                 x[i] = x[i] - ((a.values[i * this->rows + j] / a.values[i * this->rows + i]) * x[j]);
             }
         }
-        conve = RMS_norm_diff(pout2, x);
-        //std::cout << "\nconvergence values: " << conve;
+        //conve = RMS_norm_diff(pout2, x);
+
+         T answer_check[this->cols];
+         this->matVecMult(x, answer_check);
+         conve = this->RMS_norm_diff(b, answer_check);
+         // if rms norm is smaller than tolerance -> break lool
+         if (conve < tol)
+         {
+            break;
+         }
     }
 
     delete[] pout2;
-    /*
-    // Gauss-seidel implementation with convergence criteria 
-    // using a predefined iteration number iter_max
-
-    int iter_max = 500;
-    while (iter_max > 0)
-    {
-        
-        for (int i = 0; i < this->rows; i++)
-        {
-            x[i] = b[i] / a[i * rows + i];
-            for (int j = 0; j < this->cols; j++)
-            {
-                if (i == j)
-                {
-                    continue;
-                }
-               x[i] = x[i] - ((a[i * rows + j] / a[i * rows + i]) * x[j]);
-            }
-        }   
-        iter -= 1;
-    }  
-
-    delete[] pout2;
-    */
 }
 
 
