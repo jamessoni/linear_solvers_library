@@ -7,32 +7,62 @@
 
 using namespace std;
 
-void daxpy(int n, double alpha, double *dx, int incx, double *dy, int incy)
+//void daxpy(int n, double alpha, double *dx, int incx, double *dy, int incy)
+//{
+//
+//   // Let's ignore the incx and incy for now
+//   /////#pragma loop(no_vector)
+//   for (int i = 0; i < n; i++)
+//   {
+//      dy[i * incy] += alpha * dx[i * incx];
+//   }
+//}
+//
+//void daxpytx(int n, double alpha, double *dx, int incx, double *dy, int incy)
+//{
+//   //daxpy but the result is stored in x instead
+//   for (int i = 0; i < n; i++)
+//   {
+//      dx[i * incx] = dy[i*incy] + alpha * dx[i * incx];
+//   }
+//}
+//
+//void dcopy(int n, double *dx, int incx, double *dy, int incy)
+//{
+//   for (int i = 0; i < n; i++)
+//   {
+//      dy[i * incy] = dx[i * incx];
+//   }
+//
+//}
+template <class T>
+void Matrix<T>::daxpy(int n, double alpha, double* dx, int incx, double* dy, int incy)
 {
 
-   // Let's ignore the incx and incy for now
-   /////#pragma loop(no_vector)
-   for (int i = 0; i < n; i++)
-   {
-      dy[i * incy] += alpha * dx[i * incx];
-   }
+    // Let's ignore the incx and incy for now
+    /////#pragma loop(no_vector)
+    for (int i = 0; i < n; i++)
+    {
+        dy[i * incy] += alpha * dx[i * incx];
+    }
 }
 
-void daxpytx(int n, double alpha, double *dx, int incx, double *dy, int incy)
+template <class T>
+void Matrix<T>::daxpytx(int n, double alpha, double* dx, int incx, double* dy, int incy)
 {
-   //daxpy but the result is stored in x instead
-   for (int i = 0; i < n; i++)
-   {
-      dx[i * incx] = dy[i*incy] + alpha * dx[i * incx];
-   }
+    //daxpy but the result is stored in x instead
+    for (int i = 0; i < n; i++)
+    {
+        dx[i * incx] = dy[i * incy] + alpha * dx[i * incx];
+    }
 }
-
-void dcopy(int n, double *dx, int incx, double *dy, int incy)
+template <class T>
+void Matrix<T>::dcopy(int n, double* dx, int incx, double* dy, int incy)
 {
-   for (int i = 0; i < n; i++)
-   {
-      dy[i * incy] = dx[i * incx];
-   }
+    for (int i = 0; i < n; i++)
+    {
+        dy[i * incy] = dx[i * incx];
+    }
 
 }
 
@@ -280,81 +310,95 @@ bool Matrix<T>::SPDMatrixcheck()
 
 
 template <class T>
-void Matrix<T>::gauss_seidel(Matrix<T>& a, Matrix<T>& b, Matrix<T>& x_init)
+//void Matrix<T>::gauss_seidel(Matrix<T>& a, Matrix<T>& b, Matrix<T>& x_init)
+void Matrix<T>::gauss_seidel(Matrix<T>& a, T* b, T* x, float tol)
 {
-    //   Gauss-seidel implementation
-    //   Method for solving a linear system, Ax = b, where A is a positive definite matrix
-    //   Both convergence tolerance and fixed iteration methodologies presented 
-    //   as convergence criteria
-    //   Convergence tolerance and iteration number are predefined in the variables tol and iter_max below.
 
-    double tol = 1e-5;
-    int iter_max = 500;
+    /*
+    Gauss-seidel solver implementation
+        Solves a linear system of equations A * x = b using an iterative apporach
+        Input :
+            <T>array[] * a : SPD Matrix input
+            <T>array[] * b : RHS of the linear system
+            <T>array[] * x_init : array in which the solution will be stored in
+            double tol : tolerance of the solver
+
+        Output :
+            none
+
+        A needs to be a SPD matrix with no zeros on main diagonal
+        and the linear system needs to have a solution.
+        For gauss-seidel to be ran on maximum iterations - uncomment section below.
+        int iter_max : maximum number of iterations can be altered below
+
+    */
+     
     int iter = 0;
     double conve = 10;
 
-    T* pout2 = new T[x_init.rows];
-
-    for (int i = 0; i < x_init.rows * x_init.cols; i++)
+    T* pout2 = new T[this->rows];
+    
+    for (int i = 0; i < this->rows; i++)
     {
-        x_init.values[i] = 0;
+        x[i] = 0;
     }
 
     while (conve > tol)
     {
         iter += 1;
-        std::cout << "\niteration: " << iter;
-        for (int i = 0; i < x_init.rows; i++)
+        //std::cout << "\niteration: " << iter;
+        for (int i = 0; i < this->rows; i++)
         {
-            pout2[i] = x_init.values[i];
+            pout2[i] = x[i];
         }
 
         for (int i = 0; i < this->rows; i++)
         {
-            x_init.values[i] = b.values[i] / a.values[i * rows + i];
+            x[i] = b[i] / a.values[i * this->rows + i];
             for (int j = 0; j < this->cols; j++)
             {
                 if (i == j)
                 {
                     continue;
                 }
-                x_init.values[i] = x_init.values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
+                x[i] = x[i] - ((a.values[i * this->rows + j] / a.values[i * this->rows + i]) * x[j]);
             }
         }
-        conve = RMS_norm_diff(pout2, x_init.values);
-        std::cout << "\nconvergence values: " << conve;
+        conve = RMS_norm_diff(pout2, x);
+        //std::cout << "\nconvergence values: " << conve;
     }
-    std::cout << std::endl;
 
     delete[] pout2;
+    /*
+    // Gauss-seidel implementation with convergence criteria 
+    // using a predefined iteration number iter_max
 
-    //Same implementation as above using a predefined iteration number
-    //while (iter_max > 0)
-    //{
-    //    
-    //    for (int i = 0; i < this->rows; i++)
-    //    {
-    //        x_init.values[i] = b.values[i] / a.values[i * rows + i];
-    //        for (int j = 0; j < this->cols; j++)
-    //        {
-    //            if (i == j)
-    //            {
-    //                continue;
-    //            }
-    //           x_init.values[i] = x_init.values[i] - ((a.values[i * rows + j] / a.values[i * rows + i]) * x_init.values[j]);
-    //        }
-    //    }   
-    //    iter -= 1;
-    //}  
-    //std::cout << std::endl;
+    int iter_max = 500;
+    while (iter_max > 0)
+    {
+        
+        for (int i = 0; i < this->rows; i++)
+        {
+            x[i] = b[i] / a[i * rows + i];
+            for (int j = 0; j < this->cols; j++)
+            {
+                if (i == j)
+                {
+                    continue;
+                }
+               x[i] = x[i] - ((a[i * rows + j] / a[i * rows + i]) * x[j]);
+            }
+        }   
+        iter -= 1;
+    }  
 
-     //delete[] pout2;
-     
+    delete[] pout2;
+    */
 }
 
 
 template <class T>
-void Matrix<T>::jacobi_solver_element(T* b, T* output, int maxIter, bool initialised) {
+void Matrix<T>::jacobi_solver_element(T* b, T* output, int maxIter, bool initialised, float tol) {
     /*
     Jacobi solver using element-wise calcualtions
     Solves a linear system of equations A*x=b using an ittertive apporach
@@ -380,8 +424,6 @@ void Matrix<T>::jacobi_solver_element(T* b, T* output, int maxIter, bool initial
     float sum = 0;
     int n = 0;
     double sum_RMS = 0;
-    //set solution tolerance to e-10
-    double tol = 1.e-10;
 
 
     // if not initialised fist input than use random numbers to 
@@ -479,7 +521,7 @@ void  Matrix<T>::jacobi_decomposition(Matrix<T>* D, Matrix<T>* N) {
 
 
 template <class T>
-void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, bool initialised) {
+void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, bool initialised, float tol) {
     /*
     Jacobi solver using matrix manipulation
     Solves a linear system of equations A*x=b using an ittertive apporach, where every itteration
@@ -507,8 +549,6 @@ void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, bool 
     T* xk2 = new T[this->rows];   // store x_{k+1}
     T* pvecvecarray = new T[this->rows];   // store vecVecsubtract
     T* pmatvecarray = new T[this->rows];   // store matVecMult
-    //set solution tolerance to e-10
-    double tol = 1.e-10;
 
     // initialize conve varible for first itteration 
     double conve = 12;
@@ -709,45 +749,46 @@ void Matrix<T>::bsubstitution(Matrix<T>& U, T* x, T* y)
    }
 }
 
-template <class T>
-void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
-{
-   //pivoting
-
-   Matrix<T> *LU;
-
-   if (inplace) //inplace decomp
-   {
-      this->IPLUDecomp();
-      LU = this;
-   }
-   else //not inplace decomp
-   {
-      auto *NewLU = new Matrix<T>(this->rows, this->cols, true);
-      this->SLUDecomp(NewLU);
-      LU = NewLU;
-   }
-
-   for(int i = 0; i<LU->cols;i++)
-   {
-      output[i] = 0;
-   }
-
-   //creating y vector for our intermediate step.
-   T y[LU->cols];
-
-   //forward substitution
-   fsubstitution(*LU, y, b);
-
-   //backward substitution
-   bsubstitution(*LU,output,y);
-   
-   
-   if (inplace) //delete LU if new space was allocated
-   {
-      delete LU;
-   }
-}
+//template <class T>
+//void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
+//{
+//   //pivoting
+//
+//   Matrix<T> *LU;
+//
+//   if (inplace) //inplace decomp
+//   {
+//      this->IPLUDecomp();
+//      LU = this;
+//   }
+//   else //not inplace decomp
+//   {
+//      auto *NewLU = new Matrix<T>(this->rows, this->cols, true);
+//      this->SLUDecomp(NewLU);
+//      LU = NewLU;
+//   }
+//
+//   for(int i = 0; i<LU->cols;i++)
+//   {
+//      output[i] = 0;
+//   }
+//
+//   //creating y vector for our intermediate step.
+//   T y[LU->cols];
+//   //auto* y = new T[this->cols]
+//   //forward substitution
+//   fsubstitution(*LU, y, b);
+//
+//   //backward substitution
+//   bsubstitution(*LU,output,y);
+//   
+//   
+//   if (inplace) //delete LU if new space was allocated
+//   {
+//      delete LU;
+//   }
+//   delete y;
+//}
 
 template <class T>
 void Matrix<T>::conjugate_gradient(T* b, T* x, int maxIter, float tol)

@@ -178,7 +178,7 @@ void CSRMatrix<T>::dense2sparse(Matrix<T>& tosparsify, CSRMatrix<T>* output)
 
 
 template <class T>
-void CSRMatrix<T>::jacobi_solver_sparse(T* b, T* output, int maxIter, bool initialised) {
+void CSRMatrix<T>::jacobi_solver_sparse(T* b, T* output, int maxIter, bool initialised, float tol) {
     /*
     Jacobi solver using element-wise calcualtions
     Solves a linear system of equations A*x=b using an ittertive apporach
@@ -205,9 +205,6 @@ void CSRMatrix<T>::jacobi_solver_sparse(T* b, T* output, int maxIter, bool initi
     int j_index = 0;
     double a_ii = 0;
     double sum_RMS = 0;
-    //set solution tolerance to e-10
-    double tol = 1.e-10;
-
 
     // if not initialised fist input than use random numbers to 
     // initialise x_{k}
@@ -264,11 +261,10 @@ void CSRMatrix<T>::jacobi_solver_sparse(T* b, T* output, int maxIter, bool initi
 
 
         }
-
         // RMS norm of the squared difference
         conve = sqrt(sum_RMS / this->rows);
 
-        //cout << "N " << n << " conve : " << conve << endl;
+        //std::cout << "N " << n << " conve : " << conve << std::endl;
 
         // if rms norm is smaller than tolerance -> break loop
         if (conve < tol) {
@@ -300,38 +296,50 @@ float CSRMatrix<T>::RMS_norm_diff(T* vec_a, T* vec_b)
 }
 
 template <class T>
-void CSRMatrix<T>::gauss_seidel(CSRMatrix<T>& a, Matrix<T>& b, Matrix<T>& x_init)
+void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>& a, T* b, T* x_init, float tol)
 {
-    //   Gauss-seidel implementation
-    //   Method for solving a linear system, Ax = b, where A is a positive definite matrix (sparse matrix)
-    //   Both convergence tolerance and fixed iteration methodologies presented 
-    //   as convergence criteria
-    //   Convergence tolerance and iteration number are predefined in the variables tol and iter_max below.
+    /*
+    Gauss-seidel solver implementation
+        Solves a linear system of equations A * x = b using an iterative apporach
+        Input :
+            <T>array[] * a : CSR Matrix input
+            <T>array[] * b : RHS of the linear system
+            <T>array[] * x_init : array in which the solution will be stored in
+            double tol : tolerance of the solver
 
-    double tol = 1e-10;
+        Output :
+            none
+
+        A needs to be a SPD matrix with no zeros on main diagonal
+        and the linear system needs to have a solution.
+        For gauss-seidel to be ran on maximum iterations - uncomment section below.
+        int iter_max : maximum number of iterations can be altered below
+
+    */
+
     int iter_max = 500;
     int iter = 0;
     double conve = 10;
     double A_ii = 0;
 
-    T* pout2 = new T[x_init.rows];
+    T* pout2 = new T[this->rows];
 
     //x_init has initialised 0's
-    for (int i = 0; i < x_init.rows; i++)
+    for (int i = 0; i < this->rows; i++)
     {
-        x_init.values[i] = 0;
+        x_init[i] = 0;
     }
 
     while (conve > tol)
         //while (iter < iter_max)
     {
         iter += 1;
-        std::cout << "\niteration: " << iter;
+        //std::cout << "\niteration: " << iter;
         //updating pout2 as previous iteration x.values
         //enables convergence parameter to be checked against predefined tolerance
-        for (int i = 0; i < x_init.rows; i++)
+        for (int i = 0; i < this->rows; i++)
         {
-            pout2[i] = x_init.values[i];
+            pout2[i] = x_init[i];
         }
 
         for (int i = 0; i < this->rows; i++)
@@ -352,7 +360,7 @@ void CSRMatrix<T>::gauss_seidel(CSRMatrix<T>& a, Matrix<T>& b, Matrix<T>& x_init
                     }
                 }
             }
-            x_init.values[i] = b.values[i] / A_ii;
+            x_init[i] = b[i] / A_ii;
             //using compressed sparse row matVecMult 
             for (int val_index = a.row_position[i]; val_index < a.row_position[i + 1]; val_index++)
             {
@@ -360,13 +368,12 @@ void CSRMatrix<T>::gauss_seidel(CSRMatrix<T>& a, Matrix<T>& b, Matrix<T>& x_init
                 {
                     continue;
                 }
-                x_init.values[i] = x_init.values[i] - (a.values[val_index] * x_init.values[col_index[val_index]]) / A_ii;
+                x_init[i] = x_init[i] - (a.values[val_index] * x_init[col_index[val_index]]) / A_ii;
             }
         }
-        conve = RMS_norm_diff(pout2, x_init.values);
-        std::cout << "\nconvergence values: " << conve;
+        conve = RMS_norm_diff(pout2, x_init);
+        //std::cout << "\nconvergence values: " << conve;
     }
-    std::cout << std::endl;
 
     delete[] pout2;
     
