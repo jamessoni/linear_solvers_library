@@ -98,16 +98,14 @@ void CSRMatrix<T>::matVecMult(T *input, T *output)
 template <class T>
 int CSRMatrix<T>::getv(int row,int col)
 {
-    //if there isn't then this->row_position[row] and this->row_position[row+1] will be the same 
-    //so the loop won't execute
-    for (int v = this->row_position[row]; v < this->row_position[row + 1]; v++)
+    for (int v = this->row_position[row]; v < this->row_position[row + 1]; v++) //check all nnzvs in a row
     {
-        if (this->col_index[v] == col) // check if the nnzv has the column index we are looking for
+        if (this->col_index[v] == col) // check if the nnzv in the row has the column index we are looking for
         {
             return v;
         }
     }
-return -1;
+return INT_MIN;
 }
 
 // Do matrix matrix multiplication
@@ -143,9 +141,9 @@ CSRMatrix<T>* CSRMatrix<T>::matMatMult(CSRMatrix<T>& mat_right)
 			   //if there are two values in row 3, we go 4 to 6
                 for (int v = this->row_position[i]; v < this->row_position[i + 1]; v++)
                 {
-					// //for each nnz found check if we have an nnz in the right matrix too
+					// //for each nnz found check if we have an nnz in the right place in the right matrix too
                     v2 = mat_right.getv(this->col_index[v],  j);
-                    if (v2 != -1)
+                    if (v2 > 0)
                     {
                         product = product + this->values[v] * mat_right.values[v2];
                     }
@@ -420,3 +418,42 @@ void CSRMatrix<T>::gauss_seidel(CSRMatrix<T>& a, Matrix<T>& b, Matrix<T>& x_init
     delete[] pout2;
     
   }
+
+template <class T>
+CSRMatrix<T>* CSRMatrix<T>::CholeskyDecomp()
+{
+    int nnzs=0;
+    vector<T> values;
+    vector<T> row_position;
+    vector<T> col_index;
+    row_position.push_back(0);
+
+//     for (int i = 0; i < this->rows; i++)
+//    {  
+//       //all the non diagonal elements first
+//         for (int v = this->row_position[i]; v < this->row_position[i + 1]; v++)
+//         {
+//          double sigma = 0;
+//          // non-diagonals L(i, j) 
+//          for (int p = 0; p < j; p++)
+//          {
+//             sigma += L->values[i*this->cols + p] * L->values[j*this->cols + p]; 
+//          }
+//          L->values[i*this->cols + j] = ((this->values[i*this->cols + j] - sigma) / L->values[j*this->cols + j]);
+//       }
+
+//       //Then the diagonal element
+//       double sigma = 0;
+//       for (int p = 0; p < i; p++) 
+//       {
+//          sigma += L->values[i*this->cols + p] * L->values[i*this->cols + p];
+//       }
+      
+//       L->values[i*this->cols + i] = sqrt(this->values[i*this->cols + i] - sigma);
+
+//       for (int j = i+1; j < this->cols; j++)
+//       {
+//          L->values[i*this->cols + j] = 0;
+//       }
+//    }
+}

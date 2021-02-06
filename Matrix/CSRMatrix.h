@@ -20,8 +20,11 @@ public:
 
 	// Perform some operations with our matrix
 	CSRMatrix<T>* matMatMult(CSRMatrix<T>& mat_right);
+	
 	// Perform some operations with our matrix
 	void matVecMult(T* input, T* output);
+
+	CSRMatrix<T>* CholeskyDecomp();
 
 	float RMS_norm_diff(T* vec_a, T* vec_b);
 
