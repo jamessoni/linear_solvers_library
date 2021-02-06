@@ -49,6 +49,13 @@ public:
 
    void LUSolve(double* b, double* output, bool inplace);
    void conjugate_gradient(T* b, T* x, int maxIter, float tol);
+	
+   void vecVecadd(T* vec_a, T* vec_b);
+   void prolongation(Matrix<T>* a, Matrix<T>* out);
+   void restrictions(Matrix<T>* I);
+   void algebraic_multigrid(Matrix<T>* a, double* b, double* output, int maxIter, bool initialised);
+	
+	
 
    // Explicitly using the C++11 nullptr here
    T *values = nullptr;   
