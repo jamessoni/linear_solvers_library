@@ -100,73 +100,6 @@ void test_matMatMult()
     delete dense_mat4;
 }
 
-
-// test_gauss_seidel(Matrix<double>& a, Matrix<double>& b, Matrix<double>& x)
-// {
-//     void gauss_seidel(a, b, x);
-//     a.matVecMult(b);
-// }
-
-//    void vecVecsubtract(T* vec_a, T* vec_b, T* output);
-//    float RMS_norm_diff(T* vec_a, T* vec_b);
-
-//    // Jacobi solver element-wise
-//    void jacobi_solver_element(T* b, T* output, int maxIter, bool initialised);
-
-//    // Functions for Jacobi solver matrix
-//    void jacobi_solver_matrix(double* b, double* output, int maxIter, bool initialised);
-//    void jacobi_decomposition(Matrix<T>* D, Matrix<T>* N);
-	
-//    void LUDecomp(Matrix<T>& L, Matrix<T>& U);
-//    void SLUDecomp(Matrix<T>& LU);
-//    void IPLUDecomp();
-   
-//    void fsubstitution(Matrix<T>& L, T* y,T* b);
-//    void bsubstitution(Matrix<T>& U, T* x, T* y);
-
-//    void LUSolve(double* b, double* output, bool inplace);
-//    void conjugate_gradient(T* b, T* x, int maxIter, float tol);
-
-
-
-// void test_LUSolve()
-// {
-//     int rows = 10;
-// 	int cols = 10;
-// 	auto* A = new Matrix<double>(rows, cols, true);
-//     double* b = new double[rows];
-
-// 	for (int i = 0; i < rows; i++) {
-// 		b[i] = rand() % 300 + 5;
-// 	}
-
-//     readMatrixFromFile("MMM10-1.txt",A);
-// 	// set up arrays to store solutions and answer check
-// 	double* x = new double[rows];
-//     double* answer_check = new double[rows];
-//     A->LUSolve(b,x,false);
-//     A->matVecMult(x,answer_check);
-
-//     // for (int i = 0; i<10; i++)
-//     // {
-//     //     cout << b[i] << " " << answer_check[i] << endl;
-//     // }
-
-//     // if this is close to zero, the function works 
-// 	double RMS = A->RMS_norm_diff(b, answer_check);
-// 	// if RMS is larger than e-6, function is not working
-// 	if (RMS > 1.e-6) {
-// 		cout << " LUSolve failed" << endl;
-// 	} else
-//     {
-//         cout << " LUSolve successful" << endl;
-//     }
-// 	delete[] b;
-// 	delete[] x;
-// 	delete[] answer_check;
-// 	delete[] A;
-// }
-
 void test_jacobi_solver_matrix()
 {
     vector<int> vs = {10,100,1000};
@@ -265,8 +198,8 @@ void test_jacobi_solver_element()
 
 void test_LUSolve()
 {
-    vector<int> vs = {10};
-    for(int i=0;i<1;i++)
+    vector<int> vs = {10,100,1000};
+    for(int i=0;i<3;i++)
     {
         int rows = vs[i];
 	    int cols = vs[i];
@@ -285,7 +218,6 @@ void test_LUSolve()
             x[i] = 0.0;
         }
         
-
         clock_t start = clock();
         A->LUSolve(b,x,false);
     
@@ -413,15 +345,62 @@ void test_gauss_seidel()
     }
 }
 
+void test_choleskyDecomp()
+{   
+    vector<int> vs = {10,100,1000};
+    for(int i=0;i<3;i++)
+    {
+        int rowscols = vs[i];
+        
+        auto* A = new Matrix<double>(rowscols, rowscols, 3 * pow(rowscols, 1.5), 2 * pow(rowscols, 1.5));
+
+        double* b = new double[rowscols];
+        double* x = new double[rowscols];
+
+        // filling x with 0's as initial guess
+        // filling b with random ints
+        for (int i = 0; i < rowscols; i++)
+        {
+            b[i] = rand() % 10;
+            x[i] = 0;
+        }
+
+        auto* L = new Matrix<double>(rowscols, rowscols, true);
+
+        clock_t start = clock();
+        A->CholeskySolve(b,x);
+        clock_t end = clock();
+
+        double* answer_check = new double[rowscols];
+        A->matVecMult(x,answer_check);
+
+        double RMS = A->RMS_norm_diff(b, answer_check);
+
+        if (RMS > 1.e-2) {
+            cout << "CholeskySolve method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+        } else
+        {
+            cout << "CholeskySolve method successful. "<< "Time spent to solve a "<< rowscols << "x" << rowscols <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+        }
+
+
+        delete A;
+        delete L;
+        delete x;
+        delete b;
+        delete answer_check;
+    }
+}
+
 int main()
 {
     cout << "Testing:" << "\n\n";
     //test_printValues();
-    test_matMatMult();
-    test_jacobi_solver_matrix();
-    test_jacobi_solver_element();
+    //test_matMatMult();
+    //test_jacobi_solver_matrix();
+    //test_jacobi_solver_element();
     test_LUSolve();
-    test_conjugate_gradient();
-    test_gauss_seidel();
-
+    //test_conjugate_gradient();
+    //test_gauss_seidel();
+    test_choleskyDecomp();
 }

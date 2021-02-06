@@ -69,7 +69,7 @@ diag_max(diag_max), diag_min(diag_min), non_diag_max(non_diag_max), non_diag_min
             }
             else
             {
-                this->values[i * cols + j] = (rand() % 2) + 0;
+                this->values[i * cols + j] = 1;
             }
         }
     }
@@ -181,7 +181,6 @@ float Matrix<T>::RMS_norm_diff(T* vec_a, T* vec_b)
     {
         // add the squared difference to sum_a
         sum_a += (vec_a[i] - vec_b[i])*(vec_a[i] - vec_b[i]);
-
     }
 
     // return RMS norm of the squared difference
@@ -681,16 +680,21 @@ void Matrix<T>::IPLUDecomp()
 }
 
 template <class T>
-void Matrix<T>::fsubstitution(Matrix<T>& L, T* y, T* b)
+void Matrix<T>::fsubstitution(Matrix<T>& L, T* y, T* b, bool LU = false)
 {  
-    for (int i = 0; i<L.cols;i++)
+    for (int i = 0; i<L.cols;i++) //loop over rows
    {
-      double sum =0;
+      double sum = 0; //in every row
       for (int j = 0; j<L.cols; j++)
       {
          sum+= L.values[i*L.cols + j]*y[j];
       }
-      y[i]=(b[i]-sum)/1;
+      if (LU)
+      {
+         y[i]=(b[i]-sum)/1;
+      } else {
+         y[i]=(b[i]-sum)/L.values[i*L.cols+i];
+      }
    }
 }
 
@@ -704,13 +708,12 @@ void Matrix<T>::bsubstitution(Matrix<T>& U, T* x, T* y)
       {
          sum+= U.values[i*U.cols + j]*x[j];
       }
-
       x[i]=(y[i]-sum)/U.values[i*(U.cols+1)];
    }
 }
 
 template <class T>
-void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
+void Matrix<T>::LUSolve(T* b, T* output, bool inplace)
 {
    //pivoting
 
@@ -736,9 +739,15 @@ void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
    //creating y vector for our intermediate step.
    T y[LU->cols];
 
-   //forward substitution
-   fsubstitution(*LU, y, b);
+   //filling y with 0s
+   for (int i = 0; i < this->rows; i++)
+   {
+      y[i] = 0;
+   }
 
+   //forward substitution
+   fsubstitution(*LU, y, b, true);
+   
    //backward substitution
    bsubstitution(*LU,output,y);
    
@@ -824,3 +833,93 @@ void Matrix<T>::conjugate_gradient(T* b, T* x, int maxIter, float tol)
 	delete[] p;
 	delete[] Ap;
 }
+
+template<class T>
+void Matrix<T>::CholeskyDecomp(Matrix<T>* L)
+{  
+   //REMEMBER TO ADD A CHECK FOR SAME NUMBER OF COLS AND ROWS
+	// Check if our L matrix has had space allocated to it
+   if (L->values != nullptr) 
+   {
+      L->values = new T[this->rows * this->cols];
+      // Don't forget to set preallocate to true now it is protected
+      L->preallocated = true;
+   }
+
+   //Decomp
+   for (int i = 0; i < this->rows; i++)
+   {  
+      //all the non diagonal elements first
+      for (int j = 0; j < i; j++)
+      {
+         double sigma = 0;
+         // non-diagonals L(i, j) 
+         for (int p = 0; p < j; p++)
+         {
+            sigma += L->values[i*this->cols + p] * L->values[j*this->cols + p]; 
+         }
+         L->values[i*this->cols + j] = ((this->values[i*this->cols + j] - sigma) / L->values[j*this->cols + j]);
+      }
+
+      //Then the diagonal element
+      double sigma = 0;
+      for (int p = 0; p < i; p++) 
+      {
+         sigma += L->values[i*this->cols + p] * L->values[i*this->cols + p];
+      }
+      
+      L->values[i*this->cols + i] = sqrt(this->values[i*this->cols + i] - sigma);
+
+      for (int j = i+1; j < this->cols; j++)
+      {
+         L->values[i*this->cols + j] = 0;
+      }
+   }
+}
+
+template<class T>
+void Matrix<T>::transpose()
+{
+   //slot we can store one of our values in while we switch them
+   T keepval;
+
+   //looping over ij, Aij=Aji
+   for (int i = 0; i < this->rows; i++)
+   {
+      for (int j = 0; j < i; j++)
+      {
+         keepval = this->values[i*this->cols+j];
+         this->values[i*this->cols+j] = this->values[j*this->cols+i];
+         this->values[j*this->cols+i] = keepval;
+      }
+   }
+}
+
+template<class T>
+void Matrix<T>::CholeskySolve(T* b, T* x)
+{  
+   //Decomp
+   auto* L = new Matrix<double>(this->rows, this->cols, true);
+   this->CholeskyDecomp(L);
+
+   //creating an intermediate y;
+   T y[this->cols];
+
+   //filling y with 0s
+   for (int i = 0; i < this->rows; i++)
+   {
+      y[i] = 0;
+   }
+
+
+   //forward substitution
+   fsubstitution(*L, y, b);   
+
+   //transposing our L
+   L->transpose();
+
+   //backward substitution
+   bsubstitution(*L,x,y);
+
+   delete L;
+} 
