@@ -392,6 +392,49 @@ void test_choleskyDecomp()
     }
 }
 
+test_sparse_matMatMult()
+{
+    int rows = 5;
+    int cols = 5;
+    auto* dense_mat = new Matrix<double>(rows, cols, true);
+    auto* dense_mat2 = new Matrix<double>(rows, cols, true);
+    auto* dense_mat3 = new Matrix<double>(rows, cols, true);
+
+    vector<double> vs = {0,1,2,3,0,0,0,0,0,0,0,0,7,0,0,8,0,0,0,0,0,0,1,1,1};
+
+    for(int i=0;i<rows*cols;i++)
+    {
+        dense_mat->values[i] = vs[i];
+        dense_mat2->values[i] = vs[i];
+    }
+
+    dense_mat->matMatMult(*dense_mat2,*dense_mat3);
+
+    dense_mat->printMatrix();
+    dense_mat3->printMatrix();
+
+    int nnzs = 8;
+    auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
+    auto* sparse_mat2 = new CSRMatrix<double>(rows, cols, nnzs, true);
+
+
+    sparse_mat->dense2sparse(*dense_mat, sparse_mat);
+    sparse_mat->dense2sparse(*dense_mat, sparse_mat2);
+
+    sparse_mat->printMatrix();
+
+    auto* sparse = sparse_mat->matMatMult(*sparse_mat2);
+
+    sparse->printMatrix();
+
+    delete dense_mat;
+    delete dense_mat2;
+    delete dense_mat3;
+    delete sparse_mat;
+    delete sparse_mat2;
+    delete sparse;
+}
+
 int main()
 {
     cout << "Testing:" << "\n\n";
@@ -399,8 +442,9 @@ int main()
     //test_matMatMult();
     //test_jacobi_solver_matrix();
     //test_jacobi_solver_element();
-    test_LUSolve();
+    //test_LUSolve();
     //test_conjugate_gradient();
     //test_gauss_seidel();
-    test_choleskyDecomp();
+    //test_choleskyDecomp();
+    test_sparse_matMatMult();
 }
