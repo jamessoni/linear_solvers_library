@@ -707,7 +707,7 @@ void Matrix<T>::IPLUDecomp()
 }
 
 template <class T>
-void Matrix<T>::fsubstitution(Matrix<T>& L, T* y, T* b)
+void Matrix<T>::fsubstitutionLU(Matrix<T>& L, T* y, T* b)
 {  
     for (int i = 0; i<L.cols;i++)
    {
@@ -721,6 +721,20 @@ void Matrix<T>::fsubstitution(Matrix<T>& L, T* y, T* b)
 }
 
 template <class T>
+void Matrix<T>::fsubstitution(Matrix<T>& L, T* y, T* b)
+{  
+    for (int i = 0; i<L.cols;i++)
+   {
+      double sum =0;
+      for (int j = 0; j<L.cols; j++)
+      {
+         sum+= L.values[i*L.cols + j]*y[j];
+      }
+      y[i]=(b[i]-sum)/L.values[i*L.cols+i];
+   }
+}
+
+template <class T>
 void Matrix<T>::bsubstitution(Matrix<T>& U, T* x, T* y)
 {
    for (int i = U.cols-1; i>=0;i--)
@@ -728,7 +742,7 @@ void Matrix<T>::bsubstitution(Matrix<T>& U, T* x, T* y)
       double sum = 0;
       for (int j = 0; j<U.cols; j++)
       {
-         sum+= U.values[i*U.cols + j]*x[j];
+         sum+= U.es[i*U.cols + j]*x[j];
       }
 
       x[i]=(y[i]-sum)/U.values[i*(U.cols+1)];
@@ -850,4 +864,94 @@ void Matrix<T>::conjugate_gradient(T* b, T* x, int maxIter, float tol)
 	delete[] Ax;
 	delete[] p;
 	delete[] Ap;
+}
+
+template<class T>
+void Matrix<T>::CholeskyDecomp(Matrix<T>* L)
+{  
+   //REMEMBER TO ADD A CHECK FOR SAME NUMBER OF COLS AND ROWS
+	// Check if our L matrix has had space allocated to it
+   if (L->values != nullptr) 
+   {
+      L->values = new T[this->rows * this->cols];
+      // Don't forget to set preallocate to true now it is protected
+      L->preallocated = true;
+   }
+
+   //Decomp
+   for (int i = 0; i < this->rows; i++)
+   {  
+      //all the non diagonal elements first
+      for (int j = 0; j < i; j++)
+      {
+         double sigma = 0;
+         // non-diagonals L(i, j) 
+         for (int p = 0; p < j; p++)
+         {
+            sigma += L->values[i*this->cols + p] * L->values[j*this->cols + p]; 
+         }
+         L->values[i*this->cols + j] = ((this->values[i*this->cols + j] - sigma) / L->values[j*this->cols + j]);
+      }
+
+      //Then the diagonal element
+      double sigma = 0;
+      for (int p = 0; p < i; p++) 
+      {
+         sigma += L->values[i*this->cols + p] * L->values[i*this->cols + p];
+      }
+      
+      L->values[i*this->cols + i] = sqrt(this->values[i*this->cols + i] - sigma);
+
+      for (int j = i+1; j < this->cols; j++)
+      {
+         L->values[i*this->cols + j] = 0;
+      }
+   }
+}
+
+template<class T>
+void Matrix<T>::transpose()
+{
+   //slot we can store one of our values in while we switch them
+   T keepval;
+
+   //looping over ij, Aij=Aji
+   for (int i = 0; i < this->rows; i++)
+   {
+      for (int j = 0; j < i; j++)
+      {
+         keepval = this->values[i*this->cols+j];
+         this->values[i*this->cols+j] = this->values[j*this->cols+i];
+         this->values[j*this->cols+i] = keepval;
+      }
+   }
+}
+
+template<class T>
+void Matrix<T>::CholeskySolve(T* b, T* x)
+{  
+   //Decomp
+   auto* L = new Matrix<double>(this->rows, this->cols, true);
+   this->CholeskyDecomp(L);
+
+   //creating an intermediate y;
+   T y[this->cols];
+
+   //filling y with 0s
+   for (int i = 0; i < this->rows; i++)
+   {
+      y[i] = 0;
+   }
+
+
+   //forward substitution
+   fsubstitution(*L, y, b);   
+
+   //transposing our L
+   L->transpose();
+
+   //backward substitution
+   bsubstitution(*L,x,y);
+
+   delete L;
 }

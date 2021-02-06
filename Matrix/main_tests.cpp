@@ -201,8 +201,8 @@ void test_jacobi_solver_element()
 
 void test_LUSolve()
 {
-    vector<int> vs = {10};
-    for(int i=0;i<1;i++)
+    vector<int> vs = {10,100,1000};
+    for(int i=0;i<3;i++)
     {
         int rows = vs[i];
 	    int cols = vs[i];
@@ -221,7 +221,6 @@ void test_LUSolve()
             x[i] = 0.0;
         }
         
-
         clock_t start = clock();
         A->LUSolve(b,x,false);
     
@@ -640,6 +639,96 @@ void test_jacobi_sparse()
 
 }
 
+void test_choleskyDecomp()
+{   
+    vector<int> vs = {10,100,1000};
+    for(int i=0;i<3;i++)
+    {
+        int rowscols = vs[i];
+        
+        auto* A = new Matrix<double>(rowscols, rowscols, 3 * pow(rowscols, 1.5), 2 * pow(rowscols, 1.5));
+
+        double* b = new double[rowscols];
+        double* x = new double[rowscols];
+
+        // filling x with 0's as initial guess
+        // filling b with random ints
+        for (int i = 0; i < rowscols; i++)
+        {
+            b[i] = rand() % 10;
+            x[i] = 0;
+        }
+
+        auto* L = new Matrix<double>(rowscols, rowscols, true);
+
+        clock_t start = clock();
+        A->CholeskySolve(b,x);
+        clock_t end = clock();
+
+        double* answer_check = new double[rowscols];
+        A->matVecMult(x,answer_check);
+
+        double RMS = A->RMS_norm_diff(b, answer_check);
+
+        if (RMS > 1.e-2) {
+            cout << "CholeskySolve method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+        } else
+        {
+            cout << "CholeskySolve method successful. "<< "Time spent to solve a "<< rowscols << "x" << rowscols <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+        }
+
+
+        delete A;
+        delete L;
+        delete x;
+        delete b;
+        delete answer_check;
+    }
+}
+
+test_sparse_matMatMult()
+{
+    int rows = 5;
+    int cols = 5;
+    auto* dense_mat = new Matrix<double>(rows, cols, true);
+    auto* dense_mat2 = new Matrix<double>(rows, cols, true);
+    auto* dense_mat3 = new Matrix<double>(rows, cols, true);
+
+    vector<double> vs = {0,1,2,3,0,0,0,0,0,0,0,0,7,0,0,8,0,0,0,0,0,0,1,1,1};
+
+    for(int i=0;i<rows*cols;i++)
+    {
+        dense_mat->values[i] = vs[i];
+        dense_mat2->values[i] = vs[i];
+    }
+
+    dense_mat->matMatMult(*dense_mat2,*dense_mat3);
+
+    dense_mat->printMatrix();
+    dense_mat3->printMatrix();
+
+    int nnzs = 8;
+    auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
+    auto* sparse_mat2 = new CSRMatrix<double>(rows, cols, nnzs, true);
+
+
+    sparse_mat->dense2sparse(*dense_mat, sparse_mat);
+    sparse_mat->dense2sparse(*dense_mat, sparse_mat2);
+
+    sparse_mat->printMatrix();
+
+    auto* sparse = sparse_mat->matMatMult(*sparse_mat2);
+
+    sparse->printMatrix();
+
+    delete dense_mat;
+    delete dense_mat2;
+    delete dense_mat3;
+    delete sparse_mat;
+    delete sparse_mat2;
+    delete sparse;
+}
+  
 int main()
 {
     cout << "Testing:" << "\n\n";
@@ -659,5 +748,8 @@ int main()
     test_sparse_jacobi(); //known solution
     test_jacobi_sparse(); //10x10 100x100 1000x1000
 
+    //test_choleskyDecomp();
+    //test_sparse_matMatMult();
+  
     return 0;
 }

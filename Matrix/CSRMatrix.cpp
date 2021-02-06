@@ -365,3 +365,122 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>& a, T* b, T* x_init, float t
     delete[] pout2;
     
   }
+
+template <class T>
+int CSRMatrix<T>::getv(int row,int col)
+{
+    for (int v = this->row_position[row]; v < this->row_position[row + 1]; v++) //check all nnzvs in a row
+    {
+        if (this->col_index[v] == col) // check if the nnzv in the row has the column index we are looking for
+        {
+            return v;
+        }
+    }
+return INT_MIN;
+}
+
+// Do matrix matrix multiplication
+// output = this * mat_right
+template <class T>
+CSRMatrix<T>* CSRMatrix<T>::matMatMult(CSRMatrix<T>& mat_right)
+{
+    //better dimcheck
+
+   // Check our dimensions match
+   if (this->cols != mat_right.cols)
+   {
+      std::cerr << "Input dimensions for matrices don't match" << std::endl;
+      return;
+   }
+
+    int nnzs=0;
+    vector<T> values;
+    vector<T> row_position;
+    vector<T> col_index;
+
+    row_position.push_back(0); //first 0
+    T product = 0;
+    int v2;
+	    
+        //looping through each row of the left matrix
+       for (int i = 0; i < this->rows; i++)
+       {
+		   //loop through each column of the right matrix
+           for (int j = 0; j < mat_right.cols; j++)
+           {
+               product = 0;
+			   //if there are two values in row 3, we go 4 to 6
+                for (int v = this->row_position[i]; v < this->row_position[i + 1]; v++)
+                {
+					// //for each nnz found check if we have an nnz in the right place in the right matrix too
+                    v2 = mat_right.getv(this->col_index[v],  j);
+                    if (v2 > 0)
+                    {
+                        product = product + this->values[v] * mat_right.values[v2];
+                    }
+                }
+                if (product!=0)
+                {
+                    nnzs+=1;
+                    values.push_back(product);
+                    col_index.push_back(j);
+                }
+           }
+        row_position.push_back(nnzs);
+        }
+    auto* toreturn = new CSRMatrix(this->rows,this->cols,nnzs,true);
+    
+    //really really ugly setting values and col indexes
+    for (int i = 0; i<values.size();i++)
+    {
+        toreturn->values[i] = values[i];
+        toreturn->col_index[i] = col_index[i];
+    }
+
+    //really ugly setting row position values
+    for (int i = 0; i<row_position.size();i++)
+    {
+        toreturn->row_position[i] = row_position[i];
+    }
+
+    return toreturn;
+}
+
+template <class T>
+void CSRMatrix<T>::CholeskyDecomp()
+{
+    int nnzs=0;
+    vector<T> values;
+    vector<T> row_position;
+    vector<T> col_index;
+    row_position.push_back(0);
+
+//     for (int i = 0; i < this->rows; i++)
+//    {  
+//       //all the non diagonal elements first
+//         for (int v = this->row_position[i]; v < this->row_position[i + 1]; v++)
+//         {
+//          double sigma = 0;
+//          // non-diagonals L(i, j) 
+//          for (int p = 0; p < j; p++)
+//          {
+//             sigma += L->values[i*this->cols + p] * L->values[j*this->cols + p]; 
+//          }
+//          L->values[i*this->cols + j] = ((this->values[i*this->cols + j] - sigma) / L->values[j*this->cols + j]);
+//       }
+
+//       //Then the diagonal element
+//       double sigma = 0;
+//       for (int p = 0; p < i; p++) 
+//       {
+//          sigma += L->values[i*this->cols + p] * L->values[i*this->cols + p];
+//       }
+      
+//       L->values[i*this->cols + i] = sqrt(this->values[i*this->cols + i] - sigma);
+
+//       for (int j = i+1; j < this->cols; j++)
+//       {
+//          L->values[i*this->cols + j] = 0;
+//       }
+//    }
+}

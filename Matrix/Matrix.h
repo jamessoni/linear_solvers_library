@@ -19,7 +19,7 @@ public:
    // Print out the values in our matrix
    void printValues();
    virtual void printMatrix();
-
+   void transpose();
    // Perform some operations with our matrix
    void matMatMult(Matrix<T>& mat_left, Matrix<T>& output);
 
@@ -45,11 +45,15 @@ public:
    void IPLUDecomp();
    
    void fsubstitution(Matrix<T>& L, T* y,T* b);
+   void fsubstitutionLU(Matrix<T>& L, T* y,T* b);
    void bsubstitution(Matrix<T>& U, T* x, T* y);
 
    void LUSolve(double* b, double* output, bool inplace);
    void conjugate_gradient(T* b, T* x, int maxIter, float tol);
-
+  
+   void CholeskyDecomp(Matrix<T>* L);
+   void CholeskySolve(T* b, T* x);
+  
    void daxpy(int n, double alpha, double* dx, int incx, double* dy, int incy);
    void daxpytx(int n, double alpha, double* dx, int incx, double* dy, int incy);
    void dcopy(int n, double* dx, int incx, double* dy, int incy);
@@ -72,5 +76,5 @@ protected:
 // to know about these variables
 private:
 
-   int size_of_values = -1;   
+   int size_of_values = -1;
 };
