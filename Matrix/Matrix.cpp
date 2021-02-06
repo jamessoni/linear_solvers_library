@@ -824,3 +824,160 @@ void Matrix<T>::conjugate_gradient(T* b, T* x, int maxIter, float tol)
 	delete[] p;
 	delete[] Ap;
 }
+
+template <class T>
+void Matrix<T>::restrictions(Matrix<T>* I) {
+
+    for (int i = 0; i < I->rows; i++) {
+        for (int j = 0; j < I->cols; j++) {
+            
+                I->values[i * I->cols + j] = 0;
+            
+        }
+    }
+
+    for (int i = 0; i < I->rows; i++) {
+        for (int j = 0; j < I->cols; j++) {
+            if (i == j) {
+                I->values[i * I->cols + j] = 0.25;
+                I->values[i * I->cols + j + 1] = 0.5;
+                I->values[i * I->cols + j + 2] = 0.25;
+
+            }
+
+        }
+    }
+
+    I->values[I->rows - 1] = 0;
+    I->values[I->cols*I->rows - I->cols] = 0;
+}
+
+template <class T>
+void Matrix<T>::prolongation(Matrix<T>* a, Matrix<T>* out) {
+
+    for (int i = 0; i < a->rows; i++) {
+        for (int j = 0; j < a->cols; j++) {
+            (out->values[j * out->cols + i]) = 2*(a->values[i * a->cols + j]);
+        }
+    }
+
+
+
+   // out->values[out->rows - 1] = 0;
+    //out->values[out->cols*out->rows - out->cols] = 0;
+}
+
+
+
+template <class T>
+void Matrix<T>::vecVecadd(T* vec_a, T* vec_b) {
+    // Vector vector subtraction Vec_A - Vec_b = output
+    // all three vectors/arrays need to be same size
+
+    for (int i = 0; i < this->rows; i++) {
+
+        vec_a[i] +=  vec_b[i];
+
+    }
+
+}
+
+
+
+template <class T>
+void  Matrix<T>::algebraic_multigrid(Matrix<T>* a, double* b, double* x, int maxIter, bool initialised)
+{    /*
+     Multigrid method to solve the 1-D Poisson equation: -\nabla^2 u = g using a central difference scheme in space.
+     This will lead to the following stencil: (-u_{i+1} + 2u_i - u_{i-1})/(\deta x^2) which will be expressed in a matrix form:
+            [2  -1  0  0  0 ] [u_{0}]   [g_{0}]
+            [-1  2  -1  0  0] [u_{1}]   [g_{1}]
+            [0  -1  2  -1  0] [u_{2}] = [g_{2}]
+            [0  0  -1  2  -1] [u_{3}]   [g_{3}]
+            [0  0  0  -1   2] [u_{4}]   [g_{4}]
+    This linear system can be sovled using the general appraches i.e. jacobi or LU solvers but a multigrid method will be more effective. 
+    
+    */
+
+    auto* restrict_matrix = new Matrix<T>((a->rows - 1)/2, a->cols, true);
+    auto* prolongation_matrix = new Matrix<T>(a->rows, (a->cols - 1)/2, true);
+    auto* A_P = new Matrix<T>(a->rows, (a->cols - 1) /2, true);
+    auto* Ac = new Matrix<T>((a->cols - 1)/ 2, (a->cols - 1) / 2, true);
+    double* Ax = new double[a->rows];
+    double* r = new double[a->rows];
+    double* b_c = new double[a->rows];
+    
+
+    // do 3 smoothing steps on fine grid
+    a->jacobi_solver_element(a, b, x, 8, false);
+
+    // compute residual of fine grid r (r = b - A * x)
+    a->matVecMult(x, Ax);
+    a->vecVecsubtract(b, Ax, r);
+
+    // fill smoothing matrix, the identity matrix is used 
+    // compute transpose of smoothing matrix
+    a->restrictions(restrict_matrix);
+    restrict_matrix->values[1] = 0.5;
+    prolongation_matrix->prolongation(restrict_matrix, prolongation_matrix);
+
+
+    //do restriction Ac = restriction * A * prologation in two steps
+    // 
+    a->matMatMult(*prolongation_matrix, *A_P);
+
+
+
+    //do restriction (Ac = restriction * A_P
+    restrict_matrix->matMatMult(*A_P, *Ac);
+
+
+
+   
+    //restrict error
+    //cout << " resitct error" << endl;
+    restrict_matrix->matVecMult(r, b_c);
+    double* x_c = new double[Ac->rows];
+
+ 
+
+
+     //smoothing on coarse gird until tolerance is reached
+    a->jacobi_solver_matrix(Ac, b_c, x_c, 5000, false);
+
+
+
+    // correct fine error
+    prolongation_matrix->matVecMult(x_c, r);
+
+   
+
+    a->vecVecadd(x, r);
+
+
+
+
+    // smoothing on fine grid 
+    a->jacobi_solver_element(a, b, x, 8, true);
+
+
+
+
+
+
+
+
+
+    // I know this code is leaking memory but it crashes when I fix it 
+    // have to use smart pointers next time 
+    //delete smoothing_P;
+    //delete smoothing_P_T;
+    //delete A_P;
+    //delete Ac;
+    //delete[] Ax;
+    //delete[] r;
+    //delete[] r_c;
+
+  
+
+
+}
