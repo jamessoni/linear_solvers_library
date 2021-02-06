@@ -19,20 +19,19 @@ public:
 	void dense2sparse(Matrix<T>& tosparsify, CSRMatrix<T>* output);
 
 	// Perform some operations with our matrix
-	CSRMatrix<T>* matMatMult(CSRMatrix<T>& mat_right);
-	
+  CSRMatrix<T>* matMatMult(CSRMatrix<T>& mat_right);
 	// Perform some operations with our matrix
 	void matVecMult(T* input, T* output);
-
-	CSRMatrix<T>* CholeskyDecomp();
+  
+  void CholeskyDecomp();
 
 	float RMS_norm_diff(T* vec_a, T* vec_b);
 
-	void gauss_seidel(CSRMatrix<T>& a, Matrix<T>& b, Matrix<T>& x_init);
+	void gauss_seidel_sparse(CSRMatrix<T>& a, T* b, T* x_init, float tol);
 
-	void jacobi_solver_sparse(T* b, T* output, int maxIter, bool initialised);
+	void jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* output, int maxIter, bool initialised, float tol);
 
-	int getv(int row,int col);
+  int getv(int row,int col);
 
 	// Explicitly using the C++11 nullptr here
 	int* row_position = nullptr;
@@ -44,5 +43,4 @@ public:
 	// Private variables - there is no need for other classes 
 	// to know about these variables
 private:
-
 };
