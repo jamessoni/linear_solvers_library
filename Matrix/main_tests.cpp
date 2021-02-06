@@ -223,11 +223,9 @@ void test_LUSolve()
         
         clock_t start = clock();
         A->LUSolve(b,x,false);
-    
         clock_t end = clock();
 
         A->matVecMult(x,answer_check);
-
         //if this is close to zero, the function works 
         double RMS = A->RMS_norm_diff(b, answer_check);
 
@@ -497,7 +495,7 @@ void test_sparse_jacobi()
 void test_gauss_seidel_sparse()
 {
     float tol = 1.e-6;
-    vector<int> vs = { 10,100,1000 };
+    vector<int> vs = {10,100,1000 };
     //vector<int> vs = { 10,100 };
     for (int i = 0; i < 3; i++)
     {
@@ -508,7 +506,6 @@ void test_gauss_seidel_sparse()
         auto* A = new Matrix<double>(rows, cols, 3 * pow(rows, 2), 2 * pow(rows, 2));
         //A->SPDMatrixcheck();
         //A->printMatrix();
-        
         for (int j = 0; j < A->rows * A->cols; j++)
         {
             int val = A->values[j];
@@ -517,11 +514,9 @@ void test_gauss_seidel_sparse()
                 nnzs += 1;
             }
         }
-    
         auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
+        
         auto* sparse_mat_2 = new CSRMatrix<double>(rows, cols, nnzs, true);
-        sparse_mat->row_position[nnzs] = nnzs;
-
         sparse_mat->dense2sparse(*A, sparse_mat_2);
 
         double* b = new double[rows];
@@ -529,7 +524,7 @@ void test_gauss_seidel_sparse()
         for (int i = 0; i < rows; i++) {
             b[i] = rand() % 300 + 5;
         }
-
+        
         // set up arrays to store solutions and answer check
         double* x = new double[rows];
         double* answer_check = new double[rows];
@@ -592,7 +587,6 @@ void test_jacobi_sparse()
 
         auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
         auto* sparse_mat_2 = new CSRMatrix<double>(rows, cols, nnzs, true);
-        sparse_mat->row_position[nnzs] = nnzs;
 
         sparse_mat->dense2sparse(*A, sparse_mat_2);
 
@@ -732,23 +726,23 @@ test_sparse_matMatMult()
 int main()
 {
     cout << "Testing:" << "\n\n";
-    test_printValues();
-    test_matMatMult();
+    // test_printValues();
+    // test_matMatMult();
     cout << "\nSPD Dense solver testing: \n";
-    test_jacobi_solver_matrix();
-    test_jacobi_solver_element();
-    test_LUSolve();
-    test_conjugate_gradient();
-    test_gauss_seidel();
+    // test_jacobi_solver_matrix();
+    // test_jacobi_solver_element();
+    // test_LUSolve();
+    // test_conjugate_gradient();
+    // test_gauss_seidel();
+    // test_choleskyDecomp();
 
     //sparse solver tests
     cout << "\nSparse solver testing:\n";
-    test_gauss_seidel_sparse(); //10x10 100x100 1000x1000
-    test_sparse_gauss_seidel(); //known solution
-    test_sparse_jacobi(); //known solution
-    test_jacobi_sparse(); //10x10 100x100 1000x1000
+    // test_gauss_seidel_sparse(); //10x10 100x100 1000x1000
+    // test_sparse_gauss_seidel(); //known solution
+    // test_sparse_jacobi(); //known solution
+    // test_jacobi_sparse(); //10x10 100x100 1000x1000
 
-    //test_choleskyDecomp();
     //test_sparse_matMatMult();
   
     return 0;

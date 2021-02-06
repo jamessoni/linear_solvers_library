@@ -94,42 +94,6 @@ void CSRMatrix<T>::matVecMult(T *input, T *output)
    }
 }
 
-
-// Do matrix matrix multiplication
-// output = mat_left * this
-template <class T>
-void CSRMatrix<T>::matMatMult(CSRMatrix<T>& mat_left, CSRMatrix<T>& output)
-{
-
-   // Check our dimensions match
-   if (this->cols != output.cols)
-   {
-      std::cerr << "Input dimensions for matrices don't match" << std::endl;
-      return;
-   }
-
-   // Check if our output matrix has had space allocated to it
-   if (output.values != nullptr) 
-   {
-      // Check our dimensions match
-      if (this->rows != mat_left.cols || mat_left.rows != output.rows)
-      {
-         std::cerr << "Input dimensions for matrices don't match" << std::endl;
-         return;
-      }      
-   }
-   // The output hasn't been preallocated, so we are going to do that
-   else
-   {
-      std::cerr << "OUTPUT HASN'T BEEN ALLOCATED" << std::endl;
-
-   }
-
-   // HOW DO WE SET THE SPARSITY OF OUR OUTPUT MATRIX HERE??
-}
-
-
-
 template<class T>
 void CSRMatrix<T>::dense2sparse(Matrix<T>& tosparsify, CSRMatrix<T>* output)
 {

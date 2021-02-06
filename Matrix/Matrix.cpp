@@ -742,7 +742,7 @@ void Matrix<T>::bsubstitution(Matrix<T>& U, T* x, T* y)
       double sum = 0;
       for (int j = 0; j<U.cols; j++)
       {
-         sum+= U.es[i*U.cols + j]*x[j];
+         sum+= U.values[i*U.cols + j]*x[j];
       }
 
       x[i]=(y[i]-sum)/U.values[i*(U.cols+1)];
@@ -776,18 +776,22 @@ void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
    //creating y vector for our intermediate step.
    T y[LU->cols];
    //auto* y = new T[this->cols]
+
+   for (int i=0;i<LU->cols;i++)
+   {
+      y[i] = 0;
+   }
+
    //forward substitution
-   fsubstitution(*LU, y, b);
+   fsubstitutionLU(*LU, y, b);
 
    //backward substitution
    bsubstitution(*LU,output,y);
-   
-   
+
    if (inplace) //delete LU if new space was allocated
    {
       delete LU;
    }
-   delete y;
 }
 
 template <class T>
