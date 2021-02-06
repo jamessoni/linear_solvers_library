@@ -7,34 +7,6 @@
 
 using namespace std;
 
-//void daxpy(int n, double alpha, double *dx, int incx, double *dy, int incy)
-//{
-//
-//   // Let's ignore the incx and incy for now
-//   /////#pragma loop(no_vector)
-//   for (int i = 0; i < n; i++)
-//   {
-//      dy[i * incy] += alpha * dx[i * incx];
-//   }
-//}
-//
-//void daxpytx(int n, double alpha, double *dx, int incx, double *dy, int incy)
-//{
-//   //daxpy but the result is stored in x instead
-//   for (int i = 0; i < n; i++)
-//   {
-//      dx[i * incx] = dy[i*incy] + alpha * dx[i * incx];
-//   }
-//}
-//
-//void dcopy(int n, double *dx, int incx, double *dy, int incy)
-//{
-//   for (int i = 0; i < n; i++)
-//   {
-//      dy[i * incy] = dx[i * incx];
-//   }
-//
-//}
 template <class T>
 void Matrix<T>::daxpy(int n, double alpha, double* dx, int incx, double* dy, int incy)
 {
@@ -83,11 +55,12 @@ template <class T>
 Matrix<T>::Matrix(int rows, int cols, T *values_ptr): rows(rows), cols(cols), size_of_values(rows * cols), values(values_ptr)
 {}
 
-////Constructor - creating the SPD matrix
+//Constructor - creating the SPD matrix
 template <class T>
 Matrix<T>::Matrix(int rows, int cols, int diag_max, int diag_min) : rows(rows), cols(cols),
 diag_max(diag_max), diag_min(diag_min), non_diag_max(non_diag_max), non_diag_min(non_diag_min), size_of_values(rows* cols), preallocated(true)
 {
+
     this->values = new T[this->rows * this->cols];
     for (int i = 0; i < rows; i++)
     {
@@ -95,11 +68,15 @@ diag_max(diag_max), diag_min(diag_min), non_diag_max(non_diag_max), non_diag_min
         {
             if (i == j)
             {
+                // updating Matrix values on the diagonal - 
+                // enabling Diagonal Dominance
                 this->values[i * cols + j] = (rand() % diag_max) + diag_min;
             }
             else
             {
-                this->values[i * cols + j] = (rand() % 2) + 0;
+                // updating Matrix off-diagonal elements -
+                // ensuring symmetry
+                this->values[i * cols + j] = 1;
             }
         }
     }
@@ -259,22 +236,25 @@ void Matrix<T>::vecVecsubtract(T* vec_a, T* vec_b, T* output)
 template <class T>
 bool Matrix<T>::SPDMatrixcheck()
 {
-    //this method returns true if the matrix is symmetric 
-    // AND the sum of the non diagonal entries of the row
-    // is less than the smallest diagonal entry
+    /*  This method returns true if the matrix is Symmetric 
+        and Diagonal Dominance occurs (the sum of the non diagonal entries of the row
+        is less than the smallest diagonal entry)
+    */
 
     int sum_nondiag{};
     int diag_val{};
     bool SPD{ false };
-    //bool weak_test{ false };
 
-    //testing for symmetry in matrix
+    //criteria 1. testing for symmetry in matrix
     for (int i = 0; i < rows; i++){
         for (int j = 0; j < cols; j++){
-            if (i == j){
+            if (i == j)
+            {
                 continue;
             }
             else{
+                // updating SPD bool condition as we loop over symmetric
+                // elements within the Matrix
                 if (this->values[i * rows + j] == this->values[j * cols + i]){
                     SPD = true;
                 }
@@ -284,10 +264,12 @@ bool Matrix<T>::SPDMatrixcheck()
             }
         }
     }
-    //SPD test (weak) that enables convergence to occur
+    //criteria 2. SPD test (weak) that enables convergence to occur 
+    //            with certain solvers
     for (int i = 0; i < rows; i++){
         for (int j = 0; j < cols; j++){
             if (i == j){
+                //ensuring Diagonal 
                 diag_val = this->values[i * rows + j];
                 continue;
             }
@@ -310,7 +292,6 @@ bool Matrix<T>::SPDMatrixcheck()
 
 
 template <class T>
-//void Matrix<T>::gauss_seidel(Matrix<T>& a, Matrix<T>& b, Matrix<T>& x_init)
 void Matrix<T>::gauss_seidel(Matrix<T>& a, T* b, T* x, float tol)
 {
 
@@ -326,7 +307,7 @@ void Matrix<T>::gauss_seidel(Matrix<T>& a, T* b, T* x, float tol)
         Output :
             none
 
-        A needs to be a SPD matrix with no zeros on main diagonal
+        A needs to be a Diagonal Dominant / SPD matrix with no zeros on main diagonal
         and the linear system needs to have a solution.
         For gauss-seidel to be ran on maximum iterations - uncomment section below.
         int iter_max : maximum number of iterations can be altered below
@@ -347,20 +328,25 @@ void Matrix<T>::gauss_seidel(Matrix<T>& a, T* b, T* x, float tol)
     {
         iter += 1;
         //std::cout << "\niteration: " << iter;
+        //updating pout2 as previous iteration x.values
+        //enables convergence paramter to be checked against predefined tolerance
         for (int i = 0; i < this->rows; i++)
         {
             pout2[i] = x[i];
         }
-
+        //looping of rows of A
         for (int i = 0; i < this->rows; i++)
         {
             x[i] = b[i] / a.values[i * this->rows + i];
+            //looping over cols of A
             for (int j = 0; j < this->cols; j++)
             {
+                //skips over summation where (i==j)
                 if (i == j)
                 {
                     continue;
                 }
+                //computing x[i] = x[i] - (A[i][j] / A[i][i])*x[j]
                 x[i] = x[i] - ((a.values[i * this->rows + j] / a.values[i * this->rows + i]) * x[j]);
             }
         }
@@ -749,46 +735,46 @@ void Matrix<T>::bsubstitution(Matrix<T>& U, T* x, T* y)
    }
 }
 
-//template <class T>
-//void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
-//{
-//   //pivoting
-//
-//   Matrix<T> *LU;
-//
-//   if (inplace) //inplace decomp
-//   {
-//      this->IPLUDecomp();
-//      LU = this;
-//   }
-//   else //not inplace decomp
-//   {
-//      auto *NewLU = new Matrix<T>(this->rows, this->cols, true);
-//      this->SLUDecomp(NewLU);
-//      LU = NewLU;
-//   }
-//
-//   for(int i = 0; i<LU->cols;i++)
-//   {
-//      output[i] = 0;
-//   }
-//
-//   //creating y vector for our intermediate step.
-//   T y[LU->cols];
-//   //auto* y = new T[this->cols]
-//   //forward substitution
-//   fsubstitution(*LU, y, b);
-//
-//   //backward substitution
-//   bsubstitution(*LU,output,y);
-//   
-//   
-//   if (inplace) //delete LU if new space was allocated
-//   {
-//      delete LU;
-//   }
-//   delete y;
-//}
+template <class T>
+void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
+{
+   //pivoting
+
+   Matrix<T> *LU;
+
+   if (inplace) //inplace decomp
+   {
+      this->IPLUDecomp();
+      LU = this;
+   }
+   else //not inplace decomp
+   {
+      auto *NewLU = new Matrix<T>(this->rows, this->cols, true);
+      this->SLUDecomp(NewLU);
+      LU = NewLU;
+   }
+
+   for(int i = 0; i<LU->cols;i++)
+   {
+      output[i] = 0;
+   }
+
+   //creating y vector for our intermediate step.
+   T y[LU->cols];
+   //auto* y = new T[this->cols]
+   //forward substitution
+   fsubstitution(*LU, y, b);
+
+   //backward substitution
+   bsubstitution(*LU,output,y);
+   
+   
+   if (inplace) //delete LU if new space was allocated
+   {
+      delete LU;
+   }
+   delete y;
+}
 
 template <class T>
 void Matrix<T>::conjugate_gradient(T* b, T* x, int maxIter, float tol)

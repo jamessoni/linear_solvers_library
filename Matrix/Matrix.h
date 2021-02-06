@@ -27,7 +27,6 @@ public:
    bool SPDMatrixcheck();
 
    //Gauss-seidel solver
-   //void gauss_seidel(Matrix<T>& a, Matrix<T>& b, Matrix<T>& x);
    void gauss_seidel(Matrix<T>& a, T* b, T* x, float tol);
 
    void matVecMult(T* vec, T* output);
@@ -48,7 +47,7 @@ public:
    void fsubstitution(Matrix<T>& L, T* y,T* b);
    void bsubstitution(Matrix<T>& U, T* x, T* y);
 
-   //void LUSolve(double* b, double* output, bool inplace);
+   void LUSolve(double* b, double* output, bool inplace);
    void conjugate_gradient(T* b, T* x, int maxIter, float tol);
 
    void daxpy(int n, double alpha, double* dx, int incx, double* dy, int incy);
