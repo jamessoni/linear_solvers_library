@@ -2,7 +2,7 @@
 
 ### Implementing Linear Solvers
 
-Within this Advanced Programming Assignment the project aimed to implement an algorithm to solve the linear system *A**x* = *b*, where A is a positive definite matrix, with x and b being vectors.
+Within this Advanced Programming Assignment the project aimed to implement an algorithm to solve the linear system *A* *x* = *b*, where A is a positive definite matrix, with x and b being vectors.
 This linear solver library is written in the programming language, C++, maximising its advantages of Object Oriented Design, memory allocation and optimisation.
 The assignment further evaluates, tests and aims to optimise the linear solvers created fulfilling convergence to solutions for both dense and sparse input matrices. Present within this linear solvers library, exists dense and sparse libraries - each with their respective .cpp and .h files. 
 
