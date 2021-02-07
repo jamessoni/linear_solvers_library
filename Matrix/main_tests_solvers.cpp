@@ -15,112 +15,27 @@
 
 using namespace std;
 
-void test_printValues()
-{   
-    cout << "printValues():" << "\n";
-    int rows = 4;
-    int cols = 4;
-    auto *dense_mat = new Matrix<double>(rows, cols, true);
-
-    vector<double> vs = {5, 6, 2, 1, 9, 9, 7, 2, 4, 3, 8, 1, 2, 0, 9, 1};
-    for (int i = 0; i < rows * cols; i++)
-    {
-      dense_mat->values[i] = vs[i];
-    }
-    
-    dense_mat->printMatrix();
-    delete dense_mat;
-}
-
-void test_SPDMatrixcheck()
-{
-    int rows = 3;
-    int cols = 3;
-
-    //creating the SPD matrix
-    auto* A1 = new Matrix<double>(rows, cols, 3 * pow(rows, 2), 2 * pow(rows, 2));
-
-    cout << "SPDMatrixcheck(): " <<endl;
-    
-    A1->printMatrix();
-    A1->SPDMatrixcheck(); 
-}
-
-
-void readMatrixFromFile(string name, Matrix<double> *toread)
-{
-    vector<string> *splitl;
-    fstream myfile;
-    string line;
-    myfile.open(name);
-    while (getline(myfile, line)) {
-        istringstream iss(line);
-        vector<string> splitline((istream_iterator<string>(iss)), istream_iterator<string>());
-        for(int i = 0; i<splitline.size();i++)
-        {
-            toread->values[i] = stod(splitline[i]);
-        }
-    }
-    myfile.close();
-}
-
-void test_matMatMult()
-{   
-    int rows = 100;
-    int cols = 100;
-    auto *dense_mat1 = new Matrix<double>(rows, cols, true);
-    auto *dense_mat2 = new Matrix<double>(rows, cols, true);
-    auto *dense_mat3 = new Matrix<double>(rows, cols, true);
-    auto *dense_mat4 = new Matrix<double>(rows, cols, true);
-    readMatrixFromFile("MMM100-1.txt",dense_mat1);
-    readMatrixFromFile("MMM100-2.txt",dense_mat2);
-    readMatrixFromFile("MMM100-3.txt",dense_mat3);
-    
-    clock_t start = clock();
-    dense_mat1->matMatMult(*dense_mat2,*dense_mat4);
-    
-    clock_t end = clock();
-
-    double RMS = dense_mat1->RMS_norm_diff(dense_mat3->values, dense_mat4->values);
-    if (RMS > 1.e-6)
-    {
-        cout << "MatMatMult failed.";
-    } else
-    {
-        cout << "MatMatMult successful.";
-    }
-    cout << "Time spent to multiply two " << rows <<"x" << cols<< " matrices: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-    
-    // dense_mat3->printMatrix();
-    // dense_mat4->printMatrix();
-
-    delete dense_mat1;
-    delete dense_mat2;
-    delete dense_mat3;
-    delete dense_mat4;
-}
-
-
 void test_jacobi_solver_matrix()
 {
     float tol = 1e-6;
     vector<int> vs = {10,100,1000};
     for(int i=0;i<3;i++)
     {
-        int rows = vs[i];
-	    int cols = vs[i];
-        //auto *A = new Matrix<double>(rows, cols, rows*rows, cols*cols);
-        auto* A = new Matrix<double>(rows, cols, 3 * pow(rows, 2), 2 * pow(rows, 2));
-        double* b = new double[rows];
+        int rowscols = vs[i];
+        
+        auto* A = new Matrix<double>(rowscols, rowscols, 3 * pow(rowscols, 2), 2 * pow(rowscols, 2));
 
-        for (int i = 0; i < rows; i++) {
+        // set up arrays to store solutions and answer check
+        double* x = new double[rowscols];
+        double* b = new double[rowscols];
+        double* answer_check = new double[rowscols];
+
+        for (int i = 0; i < rowscols; i++) {
             b[i] = rand() % 300 + 5;
         }
 
-        // set up arrays to store solutions and answer check
-        double* x = new double[rows];
-        double* answer_check = new double[rows];
-        for(int i = 0; i<rows;i++)
+        
+        for(int i = 0; i<rowscols;i++)
         {
             x[i] = 0.0;
         }
@@ -141,7 +56,7 @@ void test_jacobi_solver_matrix()
             cout << "Jacobi_solver_matrix method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
         } else
         {
-            cout << "Jacobi_solver_matrix method successful. "<< "Time spent to solve a "<< rows << "x" << rows <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+            cout << "Jacobi_solver_matrix method successful. "<< "Time spent to solve a "<< rowscols << "x" << rowscols <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
         }
         delete[] b;
         delete[] x;
@@ -680,117 +595,120 @@ void test_choleskyDecomp()
     }
 }
 
-test_sparse_matMatMult()
+void test_sparse_CholeskySolve()
 {
-    int rows = 5;
-    int cols = 5;
-    auto* dense_mat = new Matrix<double>(rows, cols, true);
-    auto* dense_mat2 = new Matrix<double>(rows, cols, true);
-    auto* dense_mat3 = new Matrix<double>(rows, cols, true);
-
-    vector<double> vs = {0,1,2,3,0,0,0,0,0,0,0,0,7,0,0,8,0,0,0,0,0,0,1,1,1};
-
-    for(int i=0;i<rows*cols;i++)
+    vector<int> vs = {10,100};
+    for(int i=0;i<3;i++)
     {
-        dense_mat->values[i] = vs[i];
-        dense_mat2->values[i] = vs[i];
+        int rowscols = vs[i];
+        
+        auto* A = new Matrix<double>(rowscols, rowscols, 3 * pow(rowscols, 1.5), 2 * pow(rowscols, 1.5));
+
+
+        double* b = new double[rowscols];
+        double* x = new double[rowscols];
+
+        // filling x with 0's as initial guess
+        // filling b with random ints
+        for (int i = 0; i < rowscols; i++)
+        {
+            b[i] = rand() % 10;
+            x[i] = 0;
+        }
+
+        int nnzs = pow(rowscols,2);
+        auto* sparse_mat = new CSRMatrix<double>(rowscols, rowscols, nnzs, true);
+
+        sparse_mat->dense2sparse(*A, sparse_mat);
+
+        clock_t start = clock();
+        sparse_mat->CholeskySolve(b,x);
+        clock_t end = clock();
+        double* answer_check = new double[rowscols];
+        A->matVecMult(x,answer_check);
+
+        double RMS = A->RMS_norm_diff(b, answer_check);
+
+        if (RMS > 1.e-2) {
+            cout << "sparse_CholeskySolve method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+        } else
+        {
+            cout << "sparse_CholeskySolve method successful. "<< "Time spent to solve a "<< rowscols << "x" << rowscols <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+        }
+
+        delete A;
+        delete sparse_mat;
     }
-
-    dense_mat->matMatMult(*dense_mat2,*dense_mat3);
-
-    dense_mat->printMatrix();
-    dense_mat3->printMatrix();
-
-    int nnzs = 8;
-    auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
-    auto* sparse_mat2 = new CSRMatrix<double>(rows, cols, nnzs, true);
-
-
-    sparse_mat->dense2sparse(*dense_mat, sparse_mat);
-    sparse_mat->dense2sparse(*dense_mat, sparse_mat2);
-
-    sparse_mat->printMatrix();
-
-    auto* sparse = sparse_mat->matMatMult(*sparse_mat2);
-
-    sparse->printMatrix();
-
-    delete dense_mat;
-    delete dense_mat2;
-    delete dense_mat3;
-    delete sparse_mat;
-    delete sparse_mat2;
-    delete sparse;
 }
 
-test_sparse_Cholesky()
+void test_sparse_conjugate_gradient()
 {
-    int rows = 5;
-    int cols = 5;
-    auto* dense_mat = new Matrix<double>(rows, cols, true);
-    auto* dense_mat2 = new Matrix<double>(rows, cols, true);
-
-    vector<double> vs = {10, 1, 2, 3, 0,1, 8, 0, 0, 0, 2, 0, 7, 0, 1, 3, 0, 0, 10, 1, 0, 0, 1, 1, 1};
-
-    for(int i=0;i<rows*cols;i++)
-    {
-        dense_mat->values[i] = vs[i];
-    }
-
-    dense_mat->CholeskyDecomp(dense_mat2);
-
-    dense_mat->printMatrix();
-    dense_mat2->printMatrix();
-
-    int nnzs = 8;
-    auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
-
-    sparse_mat->dense2sparse(*dense_mat, sparse_mat);
-
-
-    double x[5] = {0,0,0,0,0};
-    double b[5] = {1,2,1,2,1};
-    double answer_check[5] = {0,0,0,0,0};
-    cout << answer_check[0];
-    clock_t start = clock();
-    sparse_mat->CholeskySolve(b,x);
-    clock_t end = clock();
-    //cout << "Time taken:" << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-
-    sparse_mat->matVecMult(x,answer_check);
-
-    cout << answer_check[0];
-    for(int i = 0; i<5; i++)
+    vector<int> vs = {10,100};
+    for(int i=0;i<2;i++)
     {   
-        cout << "Heya";
-        cout << answer_check[i] << "-"<< b[i] << " ";
+        double tol = 1.e-6;
+        int rowscols = vs[i];
+        
+        auto* A = new Matrix<double>(rowscols, rowscols, 3 * pow(rowscols, 1.5), 2 * pow(rowscols, 1.5));
+
+
+        double* b = new double[rowscols];
+        double* x = new double[rowscols];
+
+        // filling x with 0's as initial guess
+        // filling b with random ints
+        for (int i = 0; i < rowscols; i++)
+        {
+            b[i] = rand() % 10;
+            x[i] = 0;
+        }
+
+        int nnzs = pow(rowscols,2);
+        auto* sparse_mat = new CSRMatrix<double>(rowscols, rowscols, nnzs, true);
+
+        sparse_mat->dense2sparse(*A, sparse_mat);
+
+        clock_t start = clock();
+        sparse_mat->conjugate_gradient(b,x,1000,tol);
+        clock_t end = clock();
+
+        double* answer_check = new double[rowscols];
+        A->matVecMult(x,answer_check);
+
+        double RMS = A->RMS_norm_diff(b, answer_check);
+
+        if (RMS > 1.e-2) {
+            cout << "sparse_ConjugateGradient method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+        } else
+        {
+            cout << "sparse_ConjugateGradient method successful. "<< "Time spent to solve a "<< rowscols << "x" << rowscols <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+        }
+
+        delete A;
+        delete sparse_mat;
     }
-    delete dense_mat;
-    delete dense_mat2;
-    delete sparse_mat;
 }
 
 int main()
 {
     cout << "Testing:" << "\n\n";
-    // test_printValues();
-    // test_matMatMult();
     cout << "\nSPD Dense solver testing: \n";
-    // test_jacobi_solver_matrix();
-    // test_jacobi_solver_element();
-    // test_LUSolve();
-    // test_conjugate_gradient();
-    // test_gauss_seidel();
-    // test_choleskyDecomp();
+    test_jacobi_solver_matrix();
+    test_jacobi_solver_element();
+    test_LUSolve();
+    test_conjugate_gradient();
+    test_gauss_seidel();
+    test_choleskyDecomp();
 
     //sparse solver tests
     cout << "\nSparse solver testing:\n";
-    // test_gauss_seidel_sparse(); //10x10 100x100 1000x1000
+    test_gauss_seidel_sparse(); //10x10 100x100 1000x1000
+    test_jacobi_sparse(); //10x10 100x100 1000x1000
+    test_sparse_conjugate_gradient();
+    test_sparse_CholeskySolve();
+
     // test_sparse_gauss_seidel(); //known solution
     // test_sparse_jacobi(); //known solution
-    // test_jacobi_sparse(); //10x10 100x100 1000x1000
-
     //test_sparse_matMatMult();
-    test_sparse_Cholesky();
     return 0;
 }

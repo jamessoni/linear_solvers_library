@@ -15,9 +15,9 @@
 
 using namespace std;
 
-void test_printValues()
+void test_printMatrix()
 {   
-    cout << "printValues():" << "\n";
+    cout << "Testing printValues():" << "\n";
     int rows = 4;
     int cols = 4;
     auto *dense_mat = new Matrix<double>(rows, cols, true);
@@ -30,6 +30,7 @@ void test_printValues()
     
     dense_mat->printMatrix();
     delete dense_mat;
+    cout << "\n";
 }
 
 void test_SPDMatrixcheck()
@@ -40,7 +41,7 @@ void test_SPDMatrixcheck()
     //creating the SPD matrix
     auto* A1 = new Matrix<double>(rows, cols, 3 * pow(rows, 2), 2 * pow(rows, 2));
 
-    cout << "SPDMatrixcheck(): " <<endl;
+    cout << "Testing SPDMatrixcheck(): " <<endl;
     
     A1->printMatrix();
     A1->SPDMatrixcheck(); 
@@ -66,6 +67,7 @@ void readMatrixFromFile(string name, Matrix<double> *toread)
 
 void test_matMatMult()
 {   
+    cout << "Testing matMatMult():" << "\n";
     int rows = 100;
     int cols = 100;
     auto *dense_mat1 = new Matrix<double>(rows, cols, true);
@@ -89,10 +91,7 @@ void test_matMatMult()
     {
         cout << "MatMatMult successful.";
     }
-    cout << "Time spent to multiply two " << rows <<"x" << cols<< " matrices: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-    
-    // dense_mat3->printMatrix();
-    // dense_mat4->printMatrix();
+    cout << "Time spent to multiply two " << rows <<"x" << cols<< " matrices: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << "\n\n";
 
     delete dense_mat1;
     delete dense_mat2;
@@ -100,27 +99,143 @@ void test_matMatMult()
     delete dense_mat4;
 }
 
+test_transpose()
+{
+    cout << "Testing transpose():" << "\n";
+    int rows = 4;
+    int cols = 4;
+    auto *dense_mat = new Matrix<double>(rows, cols, true);
+
+    vector<double> vs = {5, 6, 2, 1, 9, 9, 7, 2, 4, 3, 8, 1, 2, 0, 9, 1};
+    for (int i = 0; i < rows * cols; i++)
+    {
+      dense_mat->values[i] = vs[i];
+    }
+    
+    cout << "Input Matrix:" << endl;
+    dense_mat->printMatrix();
+    dense_mat->transpose();
+    cout << "Transposed Matrix:" << endl;
+    dense_mat->printMatrix();
+    delete dense_mat;
+    cout << "\n";
+}
+
+test_matVecMult()
+{
+    cout << "Testing transpose():" << "\n";
+    cout << "\n";
+}
+test_vecVecsubtract();
+test_RMS_norm_diff();
+
+void test_sparse_matMatMult()
+{
+    int rows = 5;
+    int cols = 5;
+    auto* dense_mat = new Matrix<double>(rows, cols, true);
+    auto* dense_mat2 = new Matrix<double>(rows, cols, true);
+    auto* dense_mat3 = new Matrix<double>(rows, cols, true);
+
+    vector<double> vs = {0,1,2,3,0,0,0,0,0,0,0,0,7,0,0,8,0,0,0,0,0,0,1,1,1};
+
+    for(int i=0;i<rows*cols;i++)
+    {
+        dense_mat->values[i] = vs[i];
+        dense_mat2->values[i] = vs[i];
+    }
+
+    dense_mat->matMatMult(*dense_mat2,*dense_mat3);
+
+    dense_mat->printMatrix();
+    dense_mat3->printMatrix();
+
+    int nnzs = 8;
+    auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
+    auto* sparse_mat2 = new CSRMatrix<double>(rows, cols, nnzs, true);
+
+
+    sparse_mat->dense2sparse(*dense_mat, sparse_mat);
+    sparse_mat->dense2sparse(*dense_mat, sparse_mat2);
+
+    sparse_mat->printMatrix();
+
+    auto* sparse = sparse_mat->matMatMult(*sparse_mat2);
+
+    sparse->printMatrix();
+
+    delete dense_mat;
+    delete dense_mat2;
+    delete dense_mat3;
+    delete sparse_mat;
+    delete sparse_mat2;
+    delete sparse;
+}
+
+void test_sparse_Cholesky()
+{
+    int rows = 5;
+    int cols = 5;
+    auto* dense_mat = new Matrix<double>(rows, cols, true);
+    auto* dense_mat2 = new Matrix<double>(rows, cols, true);
+
+    vector<double> vs = {10, 1, 2, 3, 0,1, 8, 0, 0, 0, 2, 0, 7, 0, 1, 3, 0, 0, 10, 1, 0, 0, 1, 1, 1};
+
+    for(int i=0;i<rows*cols;i++)
+    {
+        dense_mat->values[i] = vs[i];
+    }
+
+    dense_mat->CholeskyDecomp(dense_mat2);
+
+    dense_mat->printMatrix();
+    dense_mat2->printMatrix();
+
+    int nnzs = 8;
+    auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
+
+    sparse_mat->dense2sparse(*dense_mat, sparse_mat);
+
+
+    double x[5] = {0,0,0,0,0};
+    double b[5] = {1,2,1,2,1};
+    double answer_check[5] = {0,0,0,0,0};
+    cout << answer_check[0];
+    clock_t start = clock();
+    sparse_mat->CholeskySolve(b,x);
+    clock_t end = clock();
+    cout << "Time taken:" << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+
+    sparse_mat->matVecMult(x,answer_check);
+
+    cout << answer_check[0];
+    for(int i = 0; i<5; i++)
+    {
+        cout << answer_check[i] << "-"<< b[i] << " ";
+    }
+    delete dense_mat;
+    delete dense_mat2;
+    delete sparse_mat;
+}
+
 int main()
 {
-    cout << "Testing:" << "\n\n";
-    // test_printValues();
+    cout << "Testing components:" << "\n\n";
+    // test_printMatrix();
     // test_matMatMult();
-    cout << "\nSPD Dense solver testing: \n";
-    // test_jacobi_solver_matrix();
-    // test_jacobi_solver_element();
-    // test_LUSolve();
-    // test_conjugate_gradient();
-    // test_gauss_seidel();
-    // test_choleskyDecomp();
+    // test_transpose();
+    // test_SPDMatrixcheck();
+    // test_matVecMult();
+    // test_vecVecsubtract();
+    // test_RMS_norm_diff();
 
-    //sparse solver tests
-    cout << "\nSparse solver testing:\n";
-    // test_gauss_seidel_sparse(); //10x10 100x100 1000x1000
-    // test_sparse_gauss_seidel(); //known solution
-    // test_sparse_jacobi(); //known solution
-    // test_jacobi_sparse(); //10x10 100x100 1000x1000
+    // test_LUDecomp();
+    // test_SLUDecomp();
+    // test_IPLUDecomp();
+    // test_fsubstitution();
+    // test_bsubstitution();
 
-    //test_sparse_matMatMult();
-    test_sparse_Cholesky();
+    // test_sparse_matMatMult();
+    // test_CholeskyDecomp();
     return 0;
 }

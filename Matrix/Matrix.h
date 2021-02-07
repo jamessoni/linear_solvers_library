@@ -21,8 +21,7 @@ public:
    virtual void printMatrix();
    void transpose();
    // Perform some operations with our matrix
-   void matMatMult(Matrix<T>& mat_left, Matrix<T>& output);
-
+   void matMatMult(Matrix<T>& mat_right, Matrix<T>& output);
   
    bool SPDMatrixcheck();
 
