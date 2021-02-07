@@ -27,10 +27,10 @@ Visual Studio Community IDE users:
 
 Terminal:
 * Enter directory with cloned repository files within the Matrix/ folder
-'''
-    $> g++ main_matrix.cpp -fpermissive
-    $> .\a
-'''
+
+        $> g++ main_matrix.cpp -fpermissive
+        $> .\a
+
 
 #### Linear Solvers:
 Within this library there exists various linear solvers; each with their enabled callable method within classes Matrix or CSRMatrix. They can all be accessed and used with the above main_matrix.cpp providing a UI platform to see examples as well as called specifically with the required inputs.
@@ -88,10 +88,11 @@ Further, sparse matrices like dense share familiar attributes and therefore call
 The sparse matrices are defined through compressed sparse row (CSR) format - pertaining to three One Dimensional arrays that respectively enables fast access of non zero values for methods and calculations.
 Example of CSR below:
 '''
+
     int rows = 4;
     int cols = 4;
-
     int const nnzs = 8;
+    
     auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
 
     int vals[nnzs] = { 10,2,12,2,6,1,1,9 };
@@ -124,10 +125,11 @@ To call the linear solvers (for both dense and sparse) it will require using an 
 Fulfilling the inputs of the solver (refer to the declared solver in header file), you can call a solver as follows:
 ###### creating inputs SPD Matrix, 1D arrays x and b:
 '''
+
         float tol = 1e-6;
         int rows = 4;
         int cols = 4;
-
+        
         //creating the SPD matrix
         auto* A = new Matrix<double>(rows, cols, 3 * pow(rows, 1.5), 2 * pow(rows, 1.5));
 
@@ -146,6 +148,7 @@ Fulfilling the inputs of the solver (refer to the declared solver in header file
 '''
 ###### Example of solver call:
 '''
+            
         //using gauss-seidel method
         A->gauss_seidel(*A, b, x, tol);
 '''
