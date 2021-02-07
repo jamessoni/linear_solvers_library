@@ -1,0 +1,20 @@
+Testing:
+
+
+SPD Dense solver testing: 
+
+Sparse solver testing:
+0.00239144Sparse Gauss-seidel method successful. Time spent to solve a 10x10 matrix: 0
+0.000508266Sparse Gauss-seidel method successful. Time spent to solve a 100x100 matrix: 0
+0.000571723Sparse Gauss-seidel method successful. Time spent to solve a 200x200 matrix: 0
+0.000570727Sparse Gauss-seidel method successful. Time spent to solve a 300x300 matrix: 2
+0.000469005Sparse Gauss-seidel method successful. Time spent to solve a 500x500 matrix: 5
+0.000417861Sparse Gauss-seidel method successful. Time spent to solve a 1000x1000 matrix: 20
+0.000344607Sparse Gauss-seidel method successful. Time spent to solve a 2000x2000 matrix: 66
+0.000322094Sparse Gauss-seidel method successful. Time spent to solve a 3000x3000 matrix: 138
+0.000256491Sparse Gauss-seidel method successful. Time spent to solve a 5000x5000 matrix: 391
+sparse_CholeskySolve method successful. Time spent to solve a 10x10 matrix: 0
+sparse_CholeskySolve method successful. Time spent to solve a 100x100 matrix: 5
+sparse_CholeskySolve method successful. Time spent to solve a 200x200 matrix: 82
+sparse_CholeskySolve method successful. Time spent to solve a 300x300 matrix: 392
+sparse_CholeskySolve method successful. Time spent to solve a 500x500 matrix: 2772

@@ -251,7 +251,7 @@ float CSRMatrix<T>::RMS_norm_diff(T* vec_a, T* vec_b)
 }
 
 template <class T>
-void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, float tol)
+void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, int maxIter, float tol)
 {
     /*
     Gauss-seidel solver implementation
@@ -283,7 +283,8 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, float t
         int iter = 0;
         double conve = 10;
         double A_ii = 0;
-
+        double* answer_check = new double[A->rows];
+        float RMS;
         T* pout2 = new T[this->rows];
 
         //x_init has initialised 0's as an initial 'guess'
@@ -292,10 +293,11 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, float t
             x_init[i] = 0;
         }
 
-        while (conve > tol)
+        int count = 0;
+        while (count < maxIter)
             //while (iter < iter_max)
         {
-            iter += 1;
+            count += 1;
             //updating pout2 as previous iteration x.values
             //enables convergence parameter to be checked against predefined tolerance
             for (int i = 0; i < this->rows; i++)
@@ -336,7 +338,12 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, float t
             }
             // calculating the rms norm difference between the previous
             // and current iterations of x
-            conve = RMS_norm_diff(pout2, x_init);
+            A->matVecMult(x_init, answer_check);
+            RMS = A->RMS_norm_diff(b, answer_check);
+            // if rms norm is smaller than tolerance -> break lool
+            if (RMS < tol) {
+                break;
+            }
             //std::cout << "\nconvergence values: " << conve;
         }
 

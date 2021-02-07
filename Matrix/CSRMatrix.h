@@ -24,7 +24,7 @@ public:
 
 	float RMS_norm_diff(T* vec_a, T* vec_b);
 
-	void gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, float tol);
+	void gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, int maxIter, float tol);
 
 	int getv(int row,int col);
   	CSRMatrix<T>* matMatMult(CSRMatrix<T>& mat_right);
