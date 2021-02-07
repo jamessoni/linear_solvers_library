@@ -1540,8 +1540,8 @@ int main_test_solvers()
     cout << "\nKnown input-output testing: \n";
     test_gauss_seidel_sparse_known(); //known solution
     test_jacobi_sparse_known(); //known solution
-    test_conjugate_gradient_known(); //known solution
-    test_cholesky_known(); //known solution
+    //test_conjugate_gradient_known(); //known solution
+    //test_cholesky_known(); //known solution
     cout << endl << endl;
     return 0;
 }
