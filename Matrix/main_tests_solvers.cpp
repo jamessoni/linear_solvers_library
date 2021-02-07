@@ -722,7 +722,54 @@ test_sparse_matMatMult()
     delete sparse_mat2;
     delete sparse;
 }
-  
+
+test_sparse_Cholesky()
+{
+    int rows = 5;
+    int cols = 5;
+    auto* dense_mat = new Matrix<double>(rows, cols, true);
+    auto* dense_mat2 = new Matrix<double>(rows, cols, true);
+
+    vector<double> vs = {10, 1, 2, 3, 0,1, 8, 0, 0, 0, 2, 0, 7, 0, 1, 3, 0, 0, 10, 1, 0, 0, 1, 1, 1};
+
+    for(int i=0;i<rows*cols;i++)
+    {
+        dense_mat->values[i] = vs[i];
+    }
+
+    dense_mat->CholeskyDecomp(dense_mat2);
+
+    dense_mat->printMatrix();
+    dense_mat2->printMatrix();
+
+    int nnzs = 8;
+    auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
+
+    sparse_mat->dense2sparse(*dense_mat, sparse_mat);
+
+
+    double x[5] = {0,0,0,0,0};
+    double b[5] = {1,2,1,2,1};
+    double answer_check[5] = {0,0,0,0,0};
+    cout << answer_check[0];
+    clock_t start = clock();
+    sparse_mat->CholeskySolve(b,x);
+    clock_t end = clock();
+    //cout << "Time taken:" << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+
+    sparse_mat->matVecMult(x,answer_check);
+
+    cout << answer_check[0];
+    for(int i = 0; i<5; i++)
+    {   
+        cout << "Heya";
+        cout << answer_check[i] << "-"<< b[i] << " ";
+    }
+    delete dense_mat;
+    delete dense_mat2;
+    delete sparse_mat;
+}
+
 int main()
 {
     cout << "Testing:" << "\n\n";
@@ -744,6 +791,6 @@ int main()
     // test_jacobi_sparse(); //10x10 100x100 1000x1000
 
     //test_sparse_matMatMult();
-  
+    test_sparse_Cholesky();
     return 0;
 }

@@ -333,14 +333,18 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>& a, T* b, T* x_init, float t
 template <class T>
 int CSRMatrix<T>::getv(int row,int col)
 {
-    for (int v = this->row_position[row]; v < this->row_position[row + 1]; v++) //check all nnzvs in a row
+    //check all nnzvs in the row
+    for (int v = this->row_position[row]; v < this->row_position[row + 1]; v++)
     {
-        if (this->col_index[v] == col) // check if the nnzv in the row has the column index we are looking for
+        // If any of them has the col index we are looking for
+        if (this->col_index[v] == col) 
         {
+            //return the value index
             return v;
         }
     }
-return INT_MIN;
+    // if we haven't found a value index, we can return -1 to tell us we haven't got a value
+    return -1;
 }
 
 // Do matrix matrix multiplication
@@ -348,103 +352,327 @@ return INT_MIN;
 template <class T>
 CSRMatrix<T>* CSRMatrix<T>::matMatMult(CSRMatrix<T>& mat_right)
 {
-    //better dimcheck
+    //add better dimcheck
 
-   // Check our dimensions match
-   if (this->cols != mat_right.cols)
+   // Check if our dimensions match
+   if (this->cols != mat_right.rows)
    {
       std::cerr << "Input dimensions for matrices don't match" << std::endl;
       return;
    }
 
+    //allocating some space for our CSRMatrix.
+    //row_position can be allocated as a vector because we know how many rows there are already
+    //values and col_index cannot be allocated as vectors because we do not know how many nnzs there are
+
     int nnzs=0;
     vector<T> values;
-    vector<T> row_position;
-    vector<T> col_index;
+    vector<int> col_index;
+    auto* row_position = new int[this->rows+1];
+    
+    //first element of row_position is always 0
+    row_position[0]=0;
 
-    row_position.push_back(0); //first 0
-    T product = 0;
+    //Keeping track of our row/column product
+    T product;
     int v2;
 	    
-        //looping through each row of the left matrix
+        //looping through every row of the left matrix
        for (int i = 0; i < this->rows; i++)
        {
-		   //loop through each column of the right matrix
+		   //looping through every column of the right matrix
            for (int j = 0; j < mat_right.cols; j++)
            {
                product = 0;
-			   //if there are two values in row 3, we go 4 to 6
+               //looping through all values in the left matrix's row
                 for (int v = this->row_position[i]; v < this->row_position[i + 1]; v++)
                 {
-					// //for each nnz found check if we have an nnz in the right place in the right matrix too
+					// for each nnz found check if we have an nnz in the right place in the right matrix too
                     v2 = mat_right.getv(this->col_index[v],  j);
+
+                    //if we find it
                     if (v2 > 0)
                     {
-                        product = product + this->values[v] * mat_right.values[v2];
+                        //multiply and add to the product
+                        product += this->values[v] * mat_right.values[v2];
                     }
                 }
+
+                //if the total product is not 0, then add the value to our work in progress CSRMatrix
                 if (product!=0)
                 {
                     nnzs+=1;
                     values.push_back(product);
                     col_index.push_back(j);
                 }
-           }
-        row_position.push_back(nnzs);
+            }
+
+            //at the end of every row loop, update row_position;
+            row_position[i+1] = nnzs;
         }
+
     auto* toreturn = new CSRMatrix(this->rows,this->cols,nnzs,true);
     
-    //really really ugly setting values and col indexes
-    for (int i = 0; i<values.size();i++)
+    //copying our values over to our newly created CSRmatrix
+
+    copy(values.begin(),values.end(),toreturn->values);
+    copy(col_index.begin(),col_index.end(),toreturn->col_index);
+    toreturn->row_position = row_position;
+
+    //and finally returning the CSRmatrix itself
+    return toreturn;
+}
+
+template <class T>
+void CSRMatrix<T>::transposeiflower()
+{
+    //CAREFUL! THIS ONLY WORKS FOR LOWER TRIANGULAR MATRICES
+    //Very slow, O(n^2), sure I could do better with more time
+
+    int nnzs = this->nnzs;
+    auto* values =  new T[nnzs];
+    auto* col_index = new int[nnzs];
+    auto* row_position = new int[this->cols+1];
+
+    for (int i = 0; i<this->cols+1;i++)
     {
-        toreturn->values[i] = values[i];
-        toreturn->col_index[i] = col_index[i];
+        row_position[i] = 0;
     }
 
-    //really ugly setting row position values
-    for (int i = 0; i<row_position.size();i++)
+    int nnzsprocessed = 0;
+    int search = 0;
+
+    while (nnzsprocessed<nnzs)
     {
-        toreturn->row_position[i] = row_position[i];
+        for (int i=0; i<nnzs;i++)
+        {
+            if (this->col_index[i] == search)
+            {
+                values[nnzsprocessed] = this->values[i];
+                for (int j = this->col_index[i]+1;j<this->cols+1;j++)
+                {
+                    row_position[j]++;
+                }
+                for (int row=this->rows;row>=0;row--)
+                {
+                    col_index[nnzsprocessed] = row;
+                    if (i+1>this->row_position[row])
+                    {
+                        break;
+                    }
+                }
+                nnzsprocessed++;
+            }
+        }
+        search++;
     }
+    this->col_index = col_index;
+    this->values = values;
+    this->row_position = row_position;
+}
+
+
+template <class T>
+CSRMatrix<T>* CSRMatrix<T>::CholeskyDecomp()
+{   
+    //lots of memory taken up but I could not find any other solution
+    //I briefly tried vectors, but it was just weird
+    int nnzs=0;
+    auto* values = new T[this->rows*this->cols];
+    auto* row_position = new int[this->rows+1];
+    auto* col_index = new int[this->rows * this->cols];
+
+    //storing ALL diagonal values makes the calculation a LOT easier
+    auto* diagonal = new T[this->rows];
+
+    row_position[0] = 0; //first element is always 0
+    row_position[1] = 0; //second element will also be 0 for the loop
+
+    int this_index;
+
+    //Looping through all rows
+    for (int i  = 0; i < this->rows; i++)
+    {
+        //Keep track of the val index of the starting matrix
+        this_index = this->row_position[i];
+
+        //all the non diagonal elements first
+        for (int j = 0; j < i; j++)
+        {   
+            //Lij = aij - sigma((Lip*Ljp), for p<j) // Ljj
+
+            //Numerator
+            T num = 0;
+
+            //Find the sum of L[i][p]*L[j][p] for all p<j
+            for (int v = row_position[i]; (v < row_position[i+1] && col_index[v] < j); v++) //first loop
+            {
+                for (int m = row_position[j]; (m < row_position[j+1] && col_index[m] <= col_index[v]); m++) //second loop
+                {
+                    if (col_index[m] == col_index[v]) //if there is a correspondence
+                    {
+                        num -= values[v] * values[m]; //negative because we need to subtract sigma from the numerator
+                    }
+                }
+            }
+
+            //Check if aij exists
+            if (this->col_index[this_index] == j)
+            {   
+                //if it does add it to the numerator
+                num +=this->values[this_index];
+                this_index++;
+            }
+
+            //If our numerator != 0, we have a non zero value to add to our matrix
+            if (num != 0)
+            {
+                //We divide by Ljj
+                T val = num / diagonal[j];
+                
+                //And then we add the result
+                values[nnzs] = val;
+                col_index[nnzs] = j;
+                row_position[i+1]++;
+                nnzs++;
+            }
+        }
+
+        //out of the loop for non-diagonal elements. We proceed to the diagonal element in our row
+        
+        //Lii = SQRT(aii - sigma((Lip^2), for p<i))
+        T tosquareroot = 0;
+
+        //looping
+        for (int v = row_position[i]; v < row_position[i+1]; v++)
+        {
+            //squaring and detracting from tosquareroot
+            tosquareroot -= pow(values[v],2);
+        }
+
+        //adding aii
+        tosquareroot += this->values[this_index];
+
+        //squarerooting to find our value
+        T val = sqrt(tosquareroot);
+
+        //Add elements to matrix
+        values[nnzs] = val;
+        col_index[nnzs] = i;
+        row_position[i+1]++;
+        row_position[i+2]=row_position[i+1];
+
+        diagonal[i] = val;
+
+        nnzs++;
+        
+    }
+
+    //Once we have "built" our vectors, we build our matrix and return it
+    auto* toreturn = new CSRMatrix(this->rows,this->cols,nnzs,true);
+    
+    toreturn->values = values;
+    toreturn->col_index = col_index;
+    toreturn->row_position = row_position;
 
     return toreturn;
 }
 
 template <class T>
-void CSRMatrix<T>::CholeskyDecomp()
+void CSRMatrix<T>::fsubstitution(T* b, T* y)
 {
-    int nnzs=0;
-    vector<T> values;
-    vector<T> row_position;
-    vector<T> col_index;
-    row_position.push_back(0);
+    T sigma; //sum of product of before-diag elements with construction-in-progress y vector
+    T diag; //Keeping track of the diagonal for efficiency
 
-//     for (int i = 0; i < this->rows; i++)
-//    {  
-//       //all the non diagonal elements first
-//         for (int v = this->row_position[i]; v < this->row_position[i + 1]; v++)
-//         {
-//          double sigma = 0;
-//          // non-diagonals L(i, j) 
-//          for (int p = 0; p < j; p++)
-//          {
-//             sigma += L->values[i*this->cols + p] * L->values[j*this->cols + p]; 
-//          }
-//          L->values[i*this->cols + j] = ((this->values[i*this->cols + j] - sigma) / L->values[j*this->cols + j]);
-//       }
+    //Looping through all rows
+    for (int i = 0; i < this->rows; i++)
+    {
+        //setting the sum to 0
+        sigma = 0;
 
-//       //Then the diagonal element
-//       double sigma = 0;
-//       for (int p = 0; p < i; p++) 
-//       {
-//          sigma += L->values[i*this->cols + p] * L->values[i*this->cols + p];
-//       }
-      
-//       L->values[i*this->cols + i] = sqrt(this->values[i*this->cols + i] - sigma);
+        //looping through values in row
+        for (int v = this->row_position[i]; v < this->row_position[i+1]; v++)
+        {
+            //column index j of the value we are currently considering
+            int j = this->col_index[v]; 
 
-//       for (int j = i+1; j < this->cols; j++)
-//       {
-//          L->values[i*this->cols + j] = 0;
-//       }
-//    }
+            if (i==j) //if i=j, then it's a diagonal value. We store it for later use
+            {
+                diag = this->values[v];
+            }
+            if (j < i) //Stopping at the diagonal
+            {
+                //multiplying value in column j of the Cholesky matrix by the value of the row v in y, adding to total
+                sigma += this->values[v]  * y[j];
+            }
+            if (j > i) //don't want to keep looping
+            {
+                break;
+            }
+        }
+        y[i] = (b[i] - sigma) / diag; //updating y
+    }
+}
+
+template <class T>
+void CSRMatrix<T>::bsubstitution(T* y, T* x)
+{
+    T sigma; //sum of product of before-diag elements with construction-in-progress y vector
+    T diag; //Keeping track of the diagonal for efficiency
+
+    //Looping through all rows, bottom to top
+    for (int i = this->rows - 1; i >= 0; i--)
+    {
+        //setting the sum to 0
+        sigma = 0;
+
+        //looping through values in row
+        for (int v = this->row_position[i]; v < this->row_position[i + 1]; v++)
+        {
+            //column index j of the value we are currently considering
+            int j = this->col_index[v];
+
+            if (j > i)  //Stopping at the diagonal
+            {
+                //multiplying value in column j of the Cholesky matrix by the value of the row v in y, adding to total
+                sigma += this->values[v] * x[j];
+            }
+            if (j == i) //if i=j, then it's a diagonal value. We store it for later use
+            {
+                diag = this->values[v];
+            }
+            if (j < i) //don't want to keep looping
+            {
+                break;
+            }
+        }
+        x[i] = (y[i] - sigma) / diag; //updating x
+    }
+}
+
+template <class T>
+void CSRMatrix<T>::CholeskySolve(T* b, T* x)
+{   
+    //Chelosky decomposing our Matrix A
+    CSRMatrix<T>* Chol = this->CholeskyDecomp();
+    
+    //initialising y and filling it with 0s
+    auto* y = new T[this->rows];
+
+    for (int i=0;i<this->rows;i++)
+    {
+        y[i] = 0;
+    }
+    
+    //FORWARD SUBSTITUTION
+    Chol->fsubstitution(b,y);
+    
+
+    //Transpose the Cholesky Matrix
+    Chol->transposeiflower();
+
+    //BACKWARD SUBSTITUTION
+    Chol->bsubstitution(y,x);
+
+    //No need to redeclare diag or sigma
 }
