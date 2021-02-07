@@ -60,6 +60,14 @@ public:
    void daxpytx(int n, double alpha, double* dx, int incx, double* dy, int incy);
    void dcopy(int n, double* dx, int incx, double* dy, int incy);
 
+   void vecVecadd(T* vec_a, T* vec_b);
+
+   // functions for onestep_multigrid
+   void prolongation(Matrix<T>* a, Matrix<T>* out);
+   void restrictions(Matrix<T>* I);
+   void onestep_multigrid(Matrix<T>* a, double* b, double* output, int maxIter, bool initialised);
+
+
 
    // Explicitly using the C++11 nullptr here
    T *values = nullptr;   
@@ -80,3 +88,4 @@ private:
 
    int size_of_values = -1;
 };
+

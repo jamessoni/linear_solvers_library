@@ -1001,6 +1001,7 @@ void Matrix<T>::daxpytx(int n, double alpha, double* dx, int incx, double* dy, i
         dx[i * incx] = dy[i * incy] + alpha * dx[i * incx];
     }
 }
+
 template <class T>
 void Matrix<T>::dcopy(int n, double* dx, int incx, double* dy, int incy)
 {
@@ -1008,5 +1009,148 @@ void Matrix<T>::dcopy(int n, double* dx, int incx, double* dy, int incy)
     {
         dy[i * incy] = dx[i * incx];
     }
+
+}
+
+template <class T>
+void Matrix<T>::restrictions(Matrix<T>* I) {
+   // create restriction matrix for the multigrid method
+
+   //loop over all rows and cols and fill with zero
+    for (int i = 0; i < I->rows; i++) {
+        for (int j = 0; j < I->cols; j++) {
+            
+                I->values[i * I->cols + j] = 0;
+            
+        }
+    }
+    //loop over all rows and cols and fill diagonals with 0.5 and the two
+    //off diagonals with 0.25
+    for (int i = 0; i < I->rows; i++) {
+        for (int j = 0; j < I->cols; j++) {
+            if (i == j) {
+                I->values[i * I->cols + j] = 0.25;
+                I->values[i * I->cols + j + 1] = 0.5;
+                I->values[i * I->cols + j + 2] = 0.25;
+
+            }
+
+        }
+    }
+
+    I->values[I->rows - 1] = 0;
+    I->values[I->cols*I->rows - I->cols] = 0;
+}
+
+template <class T>
+void Matrix<T>::prolongation(Matrix<T>* a, Matrix<T>* out) {
+   //create prolongation matirx by transposing it
+
+    for (int i = 0; i < a->rows; i++) {
+        for (int j = 0; j < a->cols; j++) {
+            (out->values[j * out->cols + i]) = 2*(a->values[i * a->cols + j]);
+        }
+    }
+
+}
+
+
+
+template <class T>
+void Matrix<T>::vecVecadd(T* vec_a, T* vec_b) {
+    // Vector vector addition Vec_A + Vec_b = output
+    // all three vectors/arrays need to be same size
+
+    for (int i = 0; i < this->rows; i++) {
+
+        vec_a[i] +=  vec_b[i];
+
+    }
+
+}
+
+
+
+template <class T>
+void  Matrix<T>::onestep_multigrid(Matrix<T>* a, double* b, double* x, int maxIter, bool initialised)
+{    /*
+     Multigrid method to solve the 1-D Poisson equation: -\nabla^2 u = g using a central difference scheme in space.
+     This will lead to the following stencil: (-u_{i+1} + 2u_i - u_{i-1})/(\deta x^2) which will be expressed in a matrix form:
+            [2  -1  0  0  0 ] [u_{0}]   [g_{0}]
+            [-1  2  -1  0  0] [u_{1}]   [g_{1}]
+            [0  -1  2  -1  0] [u_{2}] = [g_{2}]
+            [0  0  -1  2  -1] [u_{3}]   [g_{3}]
+            [0  0  0  -1   2] [u_{4}]   [g_{4}]
+    This linear system can be sovled using the general appraches i.e. jacobi or LU solvers but a multigrid method will be more effective. 
+    
+    Source: Murray P, Solving Linear ODEs With Multigrid [Internet]. 
+    Available from: https://peytondmurray.github.io/coding/multigrid-solve-odes/#moving-between-grids
+    
+    */
+
+    //declare varaibles
+    auto* restrict_matrix = new Matrix<T>((a->rows - 1)/2, a->cols, true); // restrictor which is  (n-1)/2 x n
+    auto* prolongation_matrix = new Matrix<T>(a->rows, (a->cols - 1)/2, true); // prolonation matrix which is n x (n-1)/2
+    // matrices below are just for storing different vectors and matrices operations
+    auto* A_P = new Matrix<T>(a->rows, (a->cols - 1) /2, true);
+    auto* Ac = new Matrix<T>((a->cols - 1)/ 2, (a->cols - 1) / 2, true);
+    double* Ax = new double[a->rows];
+    double* r = new double[a->rows];
+    double* b_c = new double[a->rows];
+    
+
+    // First, do smoothing steps on fine grid to reduce high frequency errors
+    a->jacobi_solver_element(a, b, x, 8, false);
+
+    // compute residual of fine grid r (r = b - A * x)
+    a->matVecMult(x, Ax);
+    a->vecVecsubtract(b, Ax, r);
+
+    // create restrictor and prolongation matrix
+    a->restrictions(restrict_matrix);
+    restrict_matrix->values[1] = 0.5;
+    prolongation_matrix->prolongation(restrict_matrix, prolongation_matrix);
+
+
+    //do restriction Ac = restriction * A * prologation in two steps:
+    // 1. A_P = A * prologation
+    a->matMatMult(*prolongation_matrix, *A_P);
+
+    // 2. Ac = restriction * A_P
+    restrict_matrix->matMatMult(*A_P, *Ac);
+
+   
+    //restrict error to coarse mesh 
+    restrict_matrix->matVecMult(r, b_c);
+
+    // array for storing the solution of coarse smoothing 
+    double* x_c = new double[Ac->rows];
+
+
+     //smoothing on coarse gird until tolerance is reached
+    a->jacobi_solver_matrix(Ac, b_c, x_c, 5000, false);
+
+
+    // compute residual of coarse grid r (r = b_c - Ac * x_c)
+    prolongation_matrix->matVecMult(x_c, r);
+
+   
+    // interpolating coarser grid error into fine grid.
+    a->vecVecadd(x, r);
+
+
+    // smoothing on fine grid 
+    a->jacobi_solver_element(a, b, x, 8, true);
+
+
+    // I know this code is leaking memory but it crashes when I use delete
+    // have to use smart pointers next time 
+    //delete smoothing_P;
+    //delete smoothing_P_T;
+    //delete A_P;
+    //delete Ac;
+    //delete[] Ax;
+    //delete[] r;
+    //delete[] r_c;
 
 }
