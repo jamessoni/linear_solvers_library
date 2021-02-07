@@ -126,8 +126,6 @@ void test_matVecMult()
     cout << "Testing transpose():" << "\n";
     cout << "\n";
 }
-void test_vecVecsubtract();
-void test_RMS_norm_diff();
 
 void test_sparse_matMatMult()
 {
@@ -224,18 +222,9 @@ int main_test_components()
     // test_printMatrix();
     // test_matMatMult();
     // test_transpose();
-    // test_SPDMatrixcheck();
     // test_matVecMult();
-    // test_vecVecsubtract();
-    // test_RMS_norm_diff();
-
-    // test_LUDecomp();
-    // test_SLUDecomp();
-    // test_IPLUDecomp();
-    // test_fsubstitution();
-    // test_bsubstitution();
 
     // test_sparse_matMatMult();
-    // test_CholeskyDecomp();
+    // test_sparse_Cholesky();
     return 0;
 }
