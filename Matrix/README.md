@@ -291,6 +291,23 @@ Two methods to perform vector vector subtraction and to calculate the RMS differ
 void vecVecsubtract(T* vec_a, T* vec_b, T* output);
 float RMS_norm_diff(T* vec_a, T* vec_b);
 
+void transpose();
+
+void jacobi_decomposition(Matrix<T>* D, Matrix<T>* N);
+void LUDecomp(Matrix<T>& L, Matrix<T>& U);
+void SLUDecomp(Matrix<T>* LU);
+void IPLUDecomp();
+void CholeskyDecomp(Matrix<T>* L);
+
+void fsubstitution(Matrix<T>& L, T* y,T* b);
+void fsubstitutionLU(Matrix<T>& L, T* y,T* b);
+void bsubstitution(Matrix<T>& U, T* x, T* y);
+
+A few methods to "vectorise" operations in our other methods. They are included as Matrix methods and not as BLAS calls because it was giving us compilation errors
+void daxpy(int n, double alpha, double* dx, int incx, double* dy, int incy);
+void daxpytx(int n, double alpha, double* dx, int incx, double* dy, int incy);
+void dcopy(int n, double* dx, int incx, double* dy, int incy);
+
 A few iterative solver methods for the system Ax = b. They all take A, b and x as inputs and also take an int maxIter and a float tol parameters.
 The solver will continue iterating until it reaches maxIter iterations or until when the RMS difference between Ax and b is lower than tol.
 
@@ -307,24 +324,6 @@ These generally achieve higher precisions, but take longer to execute.
 They take A, b and x as inputs. The LUSolve method also 
 void LUSolve(Matrix<T>* A, double* b, double* output, bool inplace);
 void CholeskySolve(Matrix<T>* A, T* b, T* x);
-
-void jacobi_decomposition(Matrix<T>* D, Matrix<T>* N);
-void LUDecomp(Matrix<T>& L, Matrix<T>& U);
-void SLUDecomp(Matrix<T>* LU);
-void IPLUDecomp();
-void fsubstitution(Matrix<T>& L, T* y,T* b);
-void fsubstitutionLU(Matrix<T>& L, T* y,T* b);
-void bsubstitution(Matrix<T>& U, T* x, T* y);
-void transpose();
-
-
-
-void CholeskyDecomp(Matrix<T>* L);
-
-A few methods to "vectorise" operations in our other methods. They are included as Matrix methods and not as BLAS calls because it was giving us compilation errors
-void daxpy(int n, double alpha, double* dx, int incx, double* dy, int incy);
-void daxpytx(int n, double alpha, double* dx, int incx, double* dy, int incy);
-void dcopy(int n, double* dx, int incx, double* dy, int incy);
 
 The class CSRMatrix has the following methods:
 
