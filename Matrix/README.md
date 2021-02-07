@@ -228,29 +228,34 @@ Example:
 auto *SPDM = new Matrix<double>(3, 3, 10,5);
 SPDM->printMatrix();
 bool spd = SPDM->SPDMatrixcheck();
-std::cout << spd;
-SPDM->values[0] = 0;
-bool spd = SPDM->SPDMatrixcheck();
-std::cout << spd;
+std::cout << "\n"<< spd<< "\n";
+SPDM->values[4] = 0;
+SPDM->printMatrix();
+spd = SPDM->SPDMatrixcheck();
+std::cout << "\n" << spd<< "\n";
 -------------
 Printing matrix
 
--4 1 1
-1 -3 1
-1 1 -1 
+6 1 1
+1 12 1
+1 1 9
+
+Passes weak SPD check
+1
 Printing matrix
 
--5 1 1
-1 -1 1
-1 1 -1
-Printing matrix
+6 1 1
+1 0 1
+1 1 9
 
-22 -4 -4
--7 5 -3
--5 -1 3
+May not converge with chosen solvers
+0
 '''
 
+A method for matrix vector multiplication Ax = b (in this case x is vec, b is output)
 void matVecMult(T* vec, T* output);
+
+
 void vecVecsubtract(T* vec_a, T* vec_b, T* output);
 float RMS_norm_diff(T* vec_a, T* vec_b);
 
@@ -283,6 +288,7 @@ void daxpytx(int n, double alpha, double* dx, int incx, double* dy, int incy);
 void dcopy(int n, double* dx, int incx, double* dy, int incy);
 
 The class CSRMatrix has the following methods:
+
 CSRMatrix(int rows, int cols, int nnzs, bool preallocate);
 CSRMatrix(int rows, int cols, int nnzs, T* values_ptr, int* row_position, int* col_index);
 ~CSRMatrix();
