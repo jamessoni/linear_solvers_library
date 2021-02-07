@@ -255,34 +255,73 @@ May not converge with chosen solvers
 A method for matrix vector multiplication Ax = b (in this case x is vec, b is output)
 void matVecMult(T* vec, T* output);
 
+Example:
+'''
+auto *Mat = new Matrix<double>(3, 3, true);
 
+//Filling our matrix with values
+double values[9] = {3,1,1,1,3,1,1,1,2};
+for(int i = 0;i<9; i++)
+{
+    Mat->values[i]=values[i];
+}
+
+Mat->printMatrix();
+double b[3] = {2,3,4};
+double x[3];
+Mat->matVecMult(b,x);
+
+//printing x
+for (int i = 0; i<3; i++)
+{
+    cout << x[i] << endl;
+}
+-------------
+Printing matrix
+
+3 1 1
+1 3 1
+1 1 2
+13
+15
+13
+'''
+
+Two methods to perform vector vector subtraction and to calculate the RMS difference between two vectors.
 void vecVecsubtract(T* vec_a, T* vec_b, T* output);
 float RMS_norm_diff(T* vec_a, T* vec_b);
 
-void gauss_seidel(Matrix<T>* A, T* b, T* x, float tol);
+A few iterative solver methods for the system Ax = b. They all take A, b and x as inputs and also take an int maxIter and a float tol parameters.
+The solver will continue iterating until it reaches maxIter iterations or until when the RMS difference between Ax and b is lower than tol.
 
+The jacobi solver has a further bool: if it is set true, then it takes the x vector provided as a first guess. Otherwise it initialises it again.
+
+void gauss_seidel(Matrix<T>* A, T* b, T* x, float tol);
 void jacobi_solver_element(Matrix<T>* A,T* b, T* output, int maxIter, bool initialised, float tol);
+void jacobi_solver_matrix(Matrix<T>* A, double* b, double* output, int maxIter, bool initialised, float tol);
+void conjugate_gradient(Matrix<T>* A, T* b, T* x, int maxIter, float tol);
+
+A few non iterative solver methods for the system Ax = b are also provided.
+These generally achieve higher precisions, but take longer to execute.
+
+They take A, b and x as inputs. The LUSolve method also 
+void LUSolve(Matrix<T>* A, double* b, double* output, bool inplace);
+void CholeskySolve(Matrix<T>* A, T* b, T* x);
 
 void jacobi_decomposition(Matrix<T>* D, Matrix<T>* N);
-void jacobi_solver_matrix(Matrix<T>* A, double* b, double* output, int maxIter, bool initialised, float tol);
-
 void LUDecomp(Matrix<T>& L, Matrix<T>& U);
 void SLUDecomp(Matrix<T>* LU);
 void IPLUDecomp();
-
 void fsubstitution(Matrix<T>& L, T* y,T* b);
 void fsubstitutionLU(Matrix<T>& L, T* y,T* b);
 void bsubstitution(Matrix<T>& U, T* x, T* y);
+void transpose();
 
-void LUSolve(Matrix<T>* A, double* b, double* output, bool inplace);
-void conjugate_gradient(Matrix<T>* A, T* b, T* x, int maxIter, float tol);
+
 
 void CholeskyDecomp(Matrix<T>* L);
 
-void transpose();
-
-void CholeskySolve(Matrix<T>* A, T* b, T* x);
-
+A few methods to "vectorise" operations in our other methods. They are included as Matrix methods and not as BLAS calls because it was giving us compilation errors
 void daxpy(int n, double alpha, double* dx, int incx, double* dy, int incy);
 void daxpytx(int n, double alpha, double* dx, int incx, double* dy, int incy);
 void dcopy(int n, double* dx, int incx, double* dy, int incy);
