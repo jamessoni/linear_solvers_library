@@ -42,8 +42,8 @@ Within this library there exists various linear solvers; each with their enabled
 
 ##### Implemented Solvers:
 * Jacobi element solver
-* Jacobi matrix solver (dense & sparse)
-* Gauss-seidel solver (dense & sparse)
+* Jacobi matrix solver 
+* Gauss-seidel solver 
 * LU solver
 * Conjugate gradient solver
 * Cholesky solver
