@@ -16,24 +16,25 @@ public:
 	// Print out the values in our matrix
 	virtual void printMatrix();
 
+	// Perform some operations with our matrix
+	void matVecMult(T* input, T* output);
 	void dense2sparse(Matrix<T>& tosparsify, CSRMatrix<T>* output);
 
-	// Perform some operations with our matrix
+	void jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* output, int maxIter, bool initialised, float tol);
+
+	float RMS_norm_diff(T* vec_a, T* vec_b);
+
+	void gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, float tol);
+
 	int getv(int row,int col);
   	CSRMatrix<T>* matMatMult(CSRMatrix<T>& mat_right);
-	void matVecMult(T* input, T* output);
 	
 	void transposeiflower();
 	CSRMatrix<T>* CholeskyDecomp();
 	void fsubstitution(T* b, T* y);
 	void bsubstitution(T* y, T* x);
-	void CholeskySolve(T* b, T* x);
+	void CholeskySolve(Matrix<T>* A, T* b, T* x);
 
-	float RMS_norm_diff(T* vec_a, T* vec_b);
-
-	void gauss_seidel_sparse(CSRMatrix<T>& a, T* b, T* x_init, float tol);
-
-	void jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* output, int maxIter, bool initialised, float tol);
 
 	// Explicitly using the C++11 nullptr here
 	int* row_position = nullptr;

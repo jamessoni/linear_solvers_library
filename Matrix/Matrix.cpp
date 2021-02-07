@@ -7,52 +7,21 @@
 
 using namespace std;
 
-template <class T>
-void Matrix<T>::daxpy(int n, double alpha, double* dx, int incx, double* dy, int incy)
-{
-
-    // Let's ignore the incx and incy for now
-    /////#pragma loop(no_vector)
-    for (int i = 0; i < n; i++)
-    {
-        dy[i * incy] += alpha * dx[i * incx];
-    }
-}
-
-template <class T>
-void Matrix<T>::daxpytx(int n, double alpha, double* dx, int incx, double* dy, int incy)
-{
-    //daxpy but the result is stored in x instead
-    for (int i = 0; i < n; i++)
-    {
-        dx[i * incx] = dy[i * incy] + alpha * dx[i * incx];
-    }
-}
-template <class T>
-void Matrix<T>::dcopy(int n, double* dx, int incx, double* dy, int incy)
-{
-    for (int i = 0; i < n; i++)
-    {
-        dy[i * incy] = dx[i * incx];
-    }
-
-}
-
 // Constructor - using an initialisation list here
 template <class T>
-Matrix<T>::Matrix(int rows, int cols, bool preallocate): rows(rows), cols(cols), size_of_values(rows * cols), preallocated(preallocate)
+Matrix<T>::Matrix(int rows, int cols, bool preallocate) : rows(rows), cols(cols), size_of_values(rows* cols), preallocated(preallocate)
 {
-   // If we want to handle memory ourselves
-   if (this->preallocated)
-   {
-      // Must remember to delete this in the destructor
-      this->values = new T[size_of_values];
-   }
+    // If we want to handle memory ourselves
+    if (this->preallocated)
+    {
+        // Must remember to delete this in the destructor
+        this->values = new T[size_of_values];
+    }
 }
 
 // Constructor - now just setting the value of our T pointer
 template <class T>
-Matrix<T>::Matrix(int rows, int cols, T *values_ptr): rows(rows), cols(cols), size_of_values(rows * cols), values(values_ptr)
+Matrix<T>::Matrix(int rows, int cols, T* values_ptr) : rows(rows), cols(cols), size_of_values(rows* cols), values(values_ptr)
 {}
 
 //Constructor - creating the SPD matrix
@@ -86,10 +55,10 @@ diag_max(diag_max), diag_min(diag_min), non_diag_max(non_diag_max), non_diag_min
 template <class T>
 Matrix<T>::~Matrix()
 {
-   // Delete the values array
-   if (this->preallocated){
-      delete[] this->values;
-   }
+    // Delete the values array
+    if (this->preallocated) {
+        delete[] this->values;
+    }
 }
 
 // Just print out the values in our values array
@@ -174,25 +143,61 @@ void Matrix<T>::matMatMult(Matrix& mat_left, Matrix& output)
    }
 }
 
-
 template <class T>
-float Matrix<T>::RMS_norm_diff(T* vec_a, T* vec_b) 
+bool Matrix<T>::SPDMatrixcheck()
 {
-    // RMS norm of the different of two vectors 
-    // all input vectors/arrays need to be same size
+    /*  This method returns true if the matrix is Symmetric
+        and Diagonal Dominance occurs (the sum of the non diagonal entries of the row
+        is less than the smallest diagonal entry)
+    */
 
-    float sum_a = 0;
+    int sum_nondiag{};
+    int diag_val{};
+    bool SPD{ false };
 
-    // loop over all values in arraz
-    for (int i = 0; i < this->rows; i++)
-    {
-        // add the squared difference to sum_a
-        sum_a += (vec_a[i] - vec_b[i])*(vec_a[i] - vec_b[i]);
-
+    //criteria 1. testing for symmetry in matrix
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            if (i == j)
+            {
+                continue;
+            }
+            else {
+                // updating SPD bool condition as we loop over symmetric
+                // elements within the Matrix
+                if (this->values[i * rows + j] == this->values[j * cols + i]) {
+                    SPD = true;
+                }
+                else {
+                    SPD = false;
+                }
+            }
+        }
     }
-
-    // return RMS norm of the squared difference
-    return sqrt(sum_a / this->rows);
+    //criteria 2. SPD test (weak) that enables convergence to occur 
+    //            with certain solvers
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            if (i == j) {
+                //ensuring Diagonal 
+                diag_val = this->values[i * rows + j];
+                continue;
+            }
+            else {
+                sum_nondiag += this->values[i * rows + j];
+            }
+        }
+    }
+    if (diag_val <= sum_nondiag) {
+        SPD = false;
+    }
+    if (SPD == true) {
+        std::cout << "\nPasses weak SPD check";
+    }
+    else {
+        std::cout << "\nMay not converge with chosen solvers";
+    }
+    return SPD;
 }
 
 template <class T>
@@ -234,65 +239,27 @@ void Matrix<T>::vecVecsubtract(T* vec_a, T* vec_b, T* output)
 }
 
 template <class T>
-bool Matrix<T>::SPDMatrixcheck()
+float Matrix<T>::RMS_norm_diff(T* vec_a, T* vec_b)
 {
-    /*  This method returns true if the matrix is Symmetric 
-        and Diagonal Dominance occurs (the sum of the non diagonal entries of the row
-        is less than the smallest diagonal entry)
-    */
+    // RMS norm of the different of two vectors 
+    // all input vectors/arrays need to be same size
 
-    int sum_nondiag{};
-    int diag_val{};
-    bool SPD{ false };
+    float sum_a = 0;
 
-    //criteria 1. testing for symmetry in matrix
-    for (int i = 0; i < rows; i++){
-        for (int j = 0; j < cols; j++){
-            if (i == j)
-            {
-                continue;
-            }
-            else{
-                // updating SPD bool condition as we loop over symmetric
-                // elements within the Matrix
-                if (this->values[i * rows + j] == this->values[j * cols + i]){
-                    SPD = true;
-                }
-                else{
-                    SPD = false;
-                }
-            }
-        }
+    // loop over all values in arraz
+    for (int i = 0; i < this->rows; i++)
+    {
+        // add the squared difference to sum_a
+        sum_a += (vec_a[i] - vec_b[i]) * (vec_a[i] - vec_b[i]);
+
     }
-    //criteria 2. SPD test (weak) that enables convergence to occur 
-    //            with certain solvers
-    for (int i = 0; i < rows; i++){
-        for (int j = 0; j < cols; j++){
-            if (i == j){
-                //ensuring Diagonal 
-                diag_val = this->values[i * rows + j];
-                continue;
-            }
-            else{
-                sum_nondiag += this->values[i * rows + j];
-            }
-        }
-    }
-    if (diag_val <= sum_nondiag) { 
-        SPD = false; 
-    }
-    if (SPD == true){
-        std::cout << "\nPasses weak SPD check";
+
+    // return RMS norm of the squared difference
+    return sqrt(sum_a / this->rows);
 }
-    else {
-        std::cout << "\nMay not converge with chosen solvers";
-    }
-    return SPD;
-}
-
 
 template <class T>
-void Matrix<T>::gauss_seidel(Matrix<T>& a, T* b, T* x, float tol)
+void Matrix<T>::gauss_seidel(Matrix<T>* A, T* b, T* x, float tol)
 {
 
     /*
@@ -337,7 +304,7 @@ void Matrix<T>::gauss_seidel(Matrix<T>& a, T* b, T* x, float tol)
         //looping of rows of A
         for (int i = 0; i < this->rows; i++)
         {
-            x[i] = b[i] / a.values[i * this->rows + i];
+            x[i] = b[i] / this->values[i * this->rows + i];
             //looping over cols of A
             for (int j = 0; j < this->cols; j++)
             {
@@ -347,12 +314,12 @@ void Matrix<T>::gauss_seidel(Matrix<T>& a, T* b, T* x, float tol)
                     continue;
                 }
                 //computing x[i] = x[i] - (A[i][j] / A[i][i])*x[j]
-                x[i] = x[i] - ((a.values[i * this->rows + j] / a.values[i * this->rows + i]) * x[j]);
+                x[i] = x[i] - ((A->values[i * this->rows + j] / A->values[i * this->rows + i]) * x[j]);
             }
         }
         // find error after every itteration
-        a.matVecMult(x, answer_check);
-        RMS = a.RMS_norm_diff(b, answer_check);
+        A->matVecMult(x, answer_check);
+        RMS = A->RMS_norm_diff(b, answer_check);
         //std::cout << "\nconvergence values: " << conve;
     }
 
@@ -744,7 +711,7 @@ void Matrix<T>::bsubstitution(Matrix<T>& U, T* x, T* y)
 }
 
 template <class T>
-void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
+void Matrix<T>::LUSolve(Matrix<T>* A, double* b, double* output, bool inplace)
 {
    //pivoting
 
@@ -768,8 +735,8 @@ void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
    }
 
    //creating y vector for our intermediate step.
-   T y[LU->cols];
-   //auto* y = new T[this->cols]
+   //T y[LU->cols];
+   auto* y = new T[this->cols];
 
    for (int i=0;i<LU->cols;i++)
    {
@@ -789,8 +756,17 @@ void Matrix<T>::LUSolve(double* b, double* output, bool inplace)
 }
 
 template <class T>
-void Matrix<T>::conjugate_gradient(T* b, T* x, int maxIter, float tol)
+void Matrix<T>::conjugate_gradient(Matrix<T>* A, T* b, T* x, int maxIter, float tol)
 {
+    for (int i = 0; i < this->rows; i++)
+    {
+        std::cout << "b: " << b[i] << "i: " << i << std::endl;
+    }
+    for (int i = 0; i < this->rows; i++)
+    {
+        std::cout << "x: " << x[i] << "i: " << i << std::endl;
+    }
+
    int count = 0; //iteration counter
    // PREALLOCATING EVERYTHING. DOES NOT MAKE SENSE TO ALLOCATE EACH LOOP.
 	auto* r = new T[this->cols]; // residual r
@@ -926,14 +902,15 @@ void Matrix<T>::transpose()
 }
 
 template<class T>
-void Matrix<T>::CholeskySolve(T* b, T* x)
+void Matrix<T>::CholeskySolve(Matrix<T>* A, T* b, T* x)
 {  
    //Decomp
    auto* L = new Matrix<double>(this->rows, this->cols, true);
    this->CholeskyDecomp(L);
 
    //creating an intermediate y;
-   T y[this->cols];
+   //T y[this->cols];
+   T* y = new double[this->cols];
 
    //filling y with 0s
    for (int i = 0; i < this->rows; i++)
@@ -952,4 +929,35 @@ void Matrix<T>::CholeskySolve(T* b, T* x)
    bsubstitution(*L,x,y);
 
    delete L;
+}
+
+template <class T>
+void Matrix<T>::daxpy(int n, double alpha, double* dx, int incx, double* dy, int incy)
+{
+
+    // Let's ignore the incx and incy for now
+    /////#pragma loop(no_vector)
+    for (int i = 0; i < n; i++)
+    {
+        dy[i * incy] += alpha * dx[i * incx];
+    }
+}
+
+template <class T>
+void Matrix<T>::daxpytx(int n, double alpha, double* dx, int incx, double* dy, int incy)
+{
+    //daxpy but the result is stored in x instead
+    for (int i = 0; i < n; i++)
+    {
+        dx[i * incx] = dy[i * incy] + alpha * dx[i * incx];
+    }
+}
+template <class T>
+void Matrix<T>::dcopy(int n, double* dx, int incx, double* dy, int incy)
+{
+    for (int i = 0; i < n; i++)
+    {
+        dy[i * incy] = dx[i * incx];
+    }
+
 }

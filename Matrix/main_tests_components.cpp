@@ -53,7 +53,7 @@ void readMatrixFromFile(string name, Matrix<double> *toread)
     vector<string> *splitl;
     fstream myfile;
     string line;
-    myfile.open(name);
+    myfile.open("premade_matrices/"+name);
     while (getline(myfile, line)) {
         istringstream iss(line);
         vector<string> splitline((istream_iterator<string>(iss)), istream_iterator<string>());
@@ -99,7 +99,7 @@ void test_matMatMult()
     delete dense_mat4;
 }
 
-test_transpose()
+void test_transpose()
 {
     cout << "Testing transpose():" << "\n";
     int rows = 4;
@@ -121,13 +121,13 @@ test_transpose()
     cout << "\n";
 }
 
-test_matVecMult()
+void test_matVecMult()
 {
     cout << "Testing transpose():" << "\n";
     cout << "\n";
 }
-test_vecVecsubtract();
-test_RMS_norm_diff();
+void test_vecVecsubtract();
+void test_RMS_norm_diff();
 
 void test_sparse_matMatMult()
 {
@@ -218,7 +218,7 @@ void test_sparse_Cholesky()
     delete sparse_mat;
 }
 
-int main()
+int main_test_components()
 {
     cout << "Testing components:" << "\n\n";
     // test_printMatrix();

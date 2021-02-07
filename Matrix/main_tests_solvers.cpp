@@ -15,700 +15,700 @@
 
 using namespace std;
 
-void test_jacobi_solver_matrix()
-{
-    float tol = 1e-6;
-    vector<int> vs = {10,100,1000};
-    for(int i=0;i<3;i++)
-    {
-        int rowscols = vs[i];
-        
-        auto* A = new Matrix<double>(rowscols, rowscols, 3 * pow(rowscols, 2), 2 * pow(rowscols, 2));
-
-        // set up arrays to store solutions and answer check
-        double* x = new double[rowscols];
-        double* b = new double[rowscols];
-        double* answer_check = new double[rowscols];
-
-        for (int i = 0; i < rowscols; i++) {
-            b[i] = rand() % 300 + 5;
-        }
-
-        
-        for(int i = 0; i<rowscols;i++)
-        {
-            x[i] = 0.0;
-        }
-        
-
-        clock_t start = clock();
-        A->jacobi_solver_matrix(A,b,x,1000,true, tol);
-    
-        clock_t end = clock();
-
-        A->matVecMult(x,answer_check);
-
-        //if this is close to zero, the function works 
-        double RMS = A->RMS_norm_diff(b, answer_check);
-
-        // if RMS is larger than e-6, function is not working
-        if (RMS > 1.e-4) {
-            cout << "Jacobi_solver_matrix method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        } else
-        {
-            cout << "Jacobi_solver_matrix method successful. "<< "Time spent to solve a "<< rowscols << "x" << rowscols <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        }
-        delete[] b;
-        delete[] x;
-        delete[] answer_check;
-        delete A;
-    }
-}
-
-void test_jacobi_solver_element()
-{
-    float tol = 1e-6;
-    vector<int> vs = {10,100,1000};
-    for(int i=0;i<3;i++)
-    {
-        int rows = vs[i];
-	    int cols = vs[i];
-        //auto *A = new Matrix<double>(rows, cols, rows*rows, cols*cols);
-        auto* A = new Matrix<double>(rows, cols, 3 * pow(rows, 2), 2 * pow(rows, 2));
-        double* b = new double[rows];
-
-        for (int i = 0; i < rows; i++) {
-            b[i] = rand() % 300 + 5;
-        }
-
-        // set up arrays to store solutions and answer check
-        double* x = new double[rows];
-        double* answer_check = new double[rows];
-        for(int i = 0; i<rows;i++)
-        {
-            x[i] = 0.0;
-        }
-        
-
-        clock_t start = clock();
-        A->jacobi_solver_element(A,b,x,1000,true, tol);
-    
-        clock_t end = clock();
-
-        A->matVecMult(x,answer_check);
-
-        //if this is close to zero, the function works 
-        double RMS = A->RMS_norm_diff(b, answer_check);
-
-        // if RMS is larger than e-6, function is not working
-        if (RMS > 1.e-4) {
-            cout << "Jacobi_solver_element method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        } else
-        {
-            cout << "Jacobi_solver_element method successful. "<< "Time spent to solve a "<< rows << "x" << rows <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        }
-        delete[] b;
-        delete[] x;
-        delete[] answer_check;
-        delete A;
-    }
-}
-
-void test_LUSolve()
-{
-    vector<int> vs = {10,100,1000};
-    for(int i=0;i<3;i++)
-    {
-        int rows = vs[i];
-	    int cols = vs[i];
-        auto *A = new Matrix<double>(rows, cols, rows*rows, cols*cols);
-        double* b = new double[rows];
-
-        for (int i = 0; i < rows; i++) {
-            b[i] = rand() % 300 + 5;
-        }
-
-        // set up arrays to store solutions and answer check
-        double* x = new double[rows];
-        double* answer_check = new double[rows];
-        for(int i = 0; i<rows;i++)
-        {
-            x[i] = 0.0;
-        }
-        
-        clock_t start = clock();
-        A->LUSolve(b,x,false);
-        clock_t end = clock();
-
-        A->matVecMult(x,answer_check);
-        //if this is close to zero, the function works 
-        double RMS = A->RMS_norm_diff(b, answer_check);
-
-        // if RMS is larger than e-6, function is not working
-        if (RMS > 1.e-2) {
-            cout << "LUSolve method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        } else
-        {
-            cout << "LUsolve method successful. "<< "Time spent to solve a "<< rows << "x" << rows <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        }
-        delete b;
-        delete x;
-        delete answer_check;
-        delete A;
-    }
-}
-
-
-void test_conjugate_gradient()
-{
-    double tol = 1.e-6;
-    vector<int> vs = {10,100,1000};
-    for(int i=0;i<3;i++)
-    {
-        int rows = vs[i];
-	    int cols = vs[i];
-        //auto *A = new Matrix<double>(rows, cols, rows*rows, cols*cols);
-        auto* A = new Matrix<double>(rows, cols, 3 * pow(rows, 2), 2 * pow(rows, 2));
-        double* b = new double[rows];
-
-        for (int i = 0; i < rows; i++) {
-            b[i] = rand() % 300 + 5;
-        }
-
-        // set up arrays to store solutions and answer check
-        double* x = new double[rows];
-        double* answer_check = new double[rows];
-        for(int i = 0; i<rows;i++)
-        {
-            x[i] = 0.0;
-        }
-        
-        //add tolerances. For LU use machine precision.
-
-        clock_t start = clock();
-        A->conjugate_gradient(b,x,1000,tol);
-    
-        clock_t end = clock();
-
-        A->matVecMult(x,answer_check);
-
-        //if this is close to zero, the function works 
-        double RMS = A->RMS_norm_diff(b, answer_check);
-
-        // if RMS is larger than e-6, function is not working
-        if (RMS > 1.e-4) {
-            cout << "Conjugate_gradient method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        } else
-        {
-            cout << "Conjugate_gradient method successful. "<< "Time spent to solve a "<< rows << "x" << rows <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        }
-        delete[] b;
-        delete[] x;
-        delete[] answer_check;
-        delete A;
-    }
-}
-
-void test_gauss_seidel()
-{   
-    float tol = 1e-6;
-    vector<int> vs = {10,100,1000};
-    for(int i=0;i<3;i++)
-    {
-        int rows = vs[i];
-        int cols = vs[i];
-
-        //creating the SPD matrix
-        auto* A = new Matrix<double>(rows, cols, 3 * pow(rows, 1.5), 2 * pow(rows, 1.5));
-
-        double* b = new double[rows];
-        for (int i = 0; i < rows; i++) {
-            b[i] = rand() % 300 + 5;
-        }
-
-        // set up arrays to store solutions and answer check
-        double* x = new double[rows];
-        double* answer_check = new double[rows];
-        for (int i = 0; i < rows; i++)
-        {
-            x[i] = 0.0;
-        }
-
-        //using gauss-seidel method
-        clock_t start = clock();
-        A->gauss_seidel(*A, b, x, tol);
-        clock_t end = clock();
-
-
-        A->matVecMult(x,answer_check);
-        double RMS = A->RMS_norm_diff(b, answer_check);
-
-        if (RMS > 1e-4) {
-            cout << "Gauss_Seidel method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        } else
-        {
-            cout << "Gauss_Seidel method successful. "<< "Time spent to solve a "<< rows << "x" << rows <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        }
-
-        delete[] b;
-        delete[] x;
-        delete[] answer_check;
-        delete A;
-    }
-}
-
-
-//known solution
-void test_sparse_gauss_seidel()
-{
-    float tol = 1e-6;
-    int rows = 4;
-    int cols = 4;
-
-    int const nnzs = 8;
-    auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
-
-    //sparse_mat->row_position[nnzs] = nnzs;
-    //int vals[nnzs] = { 10,2,12,6,2,1,9 };
-    int vals[nnzs] = { 10,2,12,2,6,1,1,9 };
-    for (int i = 0; i < nnzs; i++)
-    {
-        sparse_mat->values[i] = vals[i];
-    }
-
-    int col_ind[nnzs] = { 0,2,1,0,2,3,2,3};
-    for (int i = 0; i < nnzs; i++)
-    {
-        sparse_mat->col_index[i] = col_ind[i];
-    }
-
-    int row_ind[5] = { 0,2,3,6,8 };
-
-    for (int i = 0; i < 5; i++)
-    {
-        sparse_mat->row_position[i] = row_ind[i];
-    }
-
-    // set up arrays to store b, solution and answer check
-    double* x = new double[rows];
-    double* b = new double[rows];
-    double* answer_check = new double[rows];
-
-    //creating space for solution matrix (x) and matrix (b)
-
-    // filling x with 0's as initial guess
-    for (int i = 0; i < rows; i++)
-    {
-        x[i] = 0.0;
-    }
-
-    // filling b with i
-    for (int i = 0; i < rows; i++)
-    {
-        b[i] = i;
-    }
-
-    //using gauss-seidel method
-    clock_t start = clock();
-    sparse_mat->gauss_seidel_sparse(*sparse_mat, b, x, tol);
-    clock_t end = clock();
-
-
-    sparse_mat->matVecMult(x, answer_check);
-    double RMS = sparse_mat->RMS_norm_diff(b, answer_check);
-
-    if (RMS > 1e-4) {
-        cout << "Sparse Gauss Seidel with known input/output method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-    }
-    else
-    {
-        cout << "Sparse Gauss Seidel with known input/output method successful. " << "Time spent to solve a " << rows << "x" << rows << " matrix: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-    }
-
-    delete[] b;
-    delete[] x;
-    delete[] answer_check;
-    delete sparse_mat;
-
-}
-
-//known solution
-void test_sparse_jacobi()
-{
-    float tol = 1e-6;
-    int rows = 4;
-    int cols = 4;
-
-    int const nnzs = 8;
-    auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
-
-    //sparse_mat->row_position[nnzs] = nnzs;
-    int vals[nnzs] = { 10,2,12,2,6,1,1,9 };
-    
-    for (int i = 0; i < nnzs; i++)
-    {
-        sparse_mat->values[i] = vals[i];
-    }
-
-    int col_ind[nnzs] = { 0,2,1,0,2,3,2,3 };
-    for (int i = 0; i < nnzs; i++)
-    {
-        sparse_mat->col_index[i] = col_ind[i];
-    }
-
-   /* int row_ind[5] = { 0,2,3,5,7 };*/
-    int row_ind[5] = { 0,2,3,6,8 };
-    for (int i = 0; i < 5; i++)
-    {
-        sparse_mat->row_position[i] = row_ind[i];
-    }
-
-    // set up arrays to store b, solution and answer check
-    double* x = new double[rows];
-    double* b = new double[rows];
-    double* answer_check = new double[rows];
-
-    //creating space for solution matrix (x) and matrix (b)
-
-    // filling x with 0's as initial guess
-    for (int i = 0; i < rows; i++)
-    {
-        x[i] = 0.0;
-    }
-
-    // filling b with i
-    for (int i = 0; i < rows; i++)
-    {
-        b[i] = i;
-    }
-
-    //using jacobi method
-    clock_t start = clock();
-    sparse_mat->jacobi_solver_sparse(sparse_mat, b, x, 1000, true, tol);
-    clock_t end = clock();
-
-
-    sparse_mat->matVecMult(x, answer_check);
-    double RMS = sparse_mat->RMS_norm_diff(b, answer_check);
-
-    if (RMS > 1e-4) {
-        cout << "Sparse Jacobi with known input/output method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-    }
-    else
-    {
-        cout << "Sparse Jacobi with known input/output method successful. " << "Time spent to solve a " << rows << "x" << rows << " matrix: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-    }
-
-    delete[] b;
-    delete[] x;
-    delete[] answer_check;
-    delete sparse_mat;
-
-}
-
-// random CSR matrices of increasing size
-void test_gauss_seidel_sparse()
-{
-    float tol = 1.e-6;
-    vector<int> vs = {10,100,1000 };
-    //vector<int> vs = { 10,100 };
-    for (int i = 0; i < 3; i++)
-    {
-        int nnzs = 0;
-        int rows = vs[i];
-        int cols = vs[i];
-        //auto* A = new Matrix<double>(rows, cols, rows * rows, cols * cols);
-        auto* A = new Matrix<double>(rows, cols, 3 * pow(rows, 2), 2 * pow(rows, 2));
-        //A->SPDMatrixcheck();
-        //A->printMatrix();
-        for (int j = 0; j < A->rows * A->cols; j++)
-        {
-            int val = A->values[j];
-            if (val != 0)
-            {
-                nnzs += 1;
-            }
-        }
-        auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
-        
-        auto* sparse_mat_2 = new CSRMatrix<double>(rows, cols, nnzs, true);
-        sparse_mat->dense2sparse(*A, sparse_mat_2);
-
-        double* b = new double[rows];
-
-        for (int i = 0; i < rows; i++) {
-            b[i] = rand() % 300 + 5;
-        }
-        
-        // set up arrays to store solutions and answer check
-        double* x = new double[rows];
-        double* answer_check = new double[rows];
-        for (int i = 0; i < rows; i++)
-        {
-            x[i] = 0.0;
-        }
-
-        //add tolerances. For LU use machine precision.
-
-        clock_t start = clock();
-        sparse_mat_2->gauss_seidel_sparse(*sparse_mat_2, b, x, tol);
-
-        clock_t end = clock();
-
-        A->matVecMult(x, answer_check);
-
-        //if this is close to zero, the function works 
-        double RMS = A->RMS_norm_diff(b, answer_check);
-
-        // if RMS is larger than e-6, function is not working
-        if (RMS > 1.e-4) {
-            cout << "Sparse Gauss-seidel method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        }
-        else
-        {
-            cout << "Sparse Gauss-seidel method successful. " << "Time spent to solve a " << rows << "x" << rows << " matrix: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        }
-        delete[] b;
-        delete[] x;
-        delete[] answer_check;
-        delete A;
-        delete sparse_mat;
-        delete sparse_mat_2;
-    }
-
-}
-
-void test_jacobi_sparse()
-{
-    float tol = 1.e-6;
-    vector<int> vs = { 10,100,1000 };
-    for (int i = 0; i < 3; i++)
-    {
-        int nnzs = 0;
-        int rows = vs[i];
-        int cols = vs[i];
-        //auto* A = new Matrix<double>(rows, cols, rows * rows, cols * cols);
-        auto* A = new Matrix<double>(rows, cols, 3 * pow(rows, 2), 2 * pow(rows, 2));
-        //A->printMatrix();
-
-        for (int j = 0; j < A->rows * A->cols; j++)
-        {
-            int val = A->values[j];
-            if (val != 0)
-            {
-                nnzs += 1;
-            }
-        }
-
-        auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
-        auto* sparse_mat_2 = new CSRMatrix<double>(rows, cols, nnzs, true);
-
-        sparse_mat->dense2sparse(*A, sparse_mat_2);
-
-        double* b = new double[rows];
-
-        for (int i = 0; i < rows; i++) {
-            b[i] = rand() % 300 + 5;
-        }
-
-        // set up arrays to store solutions and answer check
-        double* x = new double[rows];
-        double* answer_check = new double[rows];
-        for (int i = 0; i < rows; i++)
-        {
-            x[i] = 0.0;
-        }
-
-        //add tolerances. For LU use machine precision.
-
-        clock_t start = clock();
-        sparse_mat_2->jacobi_solver_sparse(sparse_mat_2, b, x, 100, true, tol);
-        clock_t end = clock();
-
-        A->matVecMult(x, answer_check);
-
-        //if this is close to zero, the function works 
-        double RMS = A->RMS_norm_diff(b, answer_check);
-
-        // if RMS is larger than e-6, function is not working
-        if (RMS > 1.e-4) {
-            cout << "Sparse Jacobi method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        }
-        else
-        {
-            cout << "Sparse Jacobi method successful. " << "Time spent to solve a " << rows << "x" << rows << " matrix: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        }
-        delete[] b;
-        delete[] x;
-        delete[] answer_check;
-        delete A;
-        delete sparse_mat;
-        delete sparse_mat_2;
-    }
-
-}
-
-void test_choleskyDecomp()
-{   
-    vector<int> vs = {10,100,1000};
-    for(int i=0;i<3;i++)
-    {
-        int rowscols = vs[i];
-        
-        auto* A = new Matrix<double>(rowscols, rowscols, 3 * pow(rowscols, 1.5), 2 * pow(rowscols, 1.5));
-
-        double* b = new double[rowscols];
-        double* x = new double[rowscols];
-
-        // filling x with 0's as initial guess
-        // filling b with random ints
-        for (int i = 0; i < rowscols; i++)
-        {
-            b[i] = rand() % 10;
-            x[i] = 0;
-        }
-
-        auto* L = new Matrix<double>(rowscols, rowscols, true);
-
-        clock_t start = clock();
-        A->CholeskySolve(b,x);
-        clock_t end = clock();
-
-        double* answer_check = new double[rowscols];
-        A->matVecMult(x,answer_check);
-
-        double RMS = A->RMS_norm_diff(b, answer_check);
-
-        if (RMS > 1.e-2) {
-            cout << "CholeskySolve method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        } else
-        {
-            cout << "CholeskySolve method successful. "<< "Time spent to solve a "<< rowscols << "x" << rowscols <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        }
-
-
-        delete A;
-        delete L;
-        delete x;
-        delete b;
-        delete answer_check;
-    }
-}
-
-void test_sparse_CholeskySolve()
-{
-    vector<int> vs = {10,100};
-    for(int i=0;i<3;i++)
-    {
-        int rowscols = vs[i];
-        
-        auto* A = new Matrix<double>(rowscols, rowscols, 3 * pow(rowscols, 1.5), 2 * pow(rowscols, 1.5));
-
-
-        double* b = new double[rowscols];
-        double* x = new double[rowscols];
-
-        // filling x with 0's as initial guess
-        // filling b with random ints
-        for (int i = 0; i < rowscols; i++)
-        {
-            b[i] = rand() % 10;
-            x[i] = 0;
-        }
-
-        int nnzs = pow(rowscols,2);
-        auto* sparse_mat = new CSRMatrix<double>(rowscols, rowscols, nnzs, true);
-
-        sparse_mat->dense2sparse(*A, sparse_mat);
-
-        clock_t start = clock();
-        sparse_mat->CholeskySolve(b,x);
-        clock_t end = clock();
-        double* answer_check = new double[rowscols];
-        A->matVecMult(x,answer_check);
-
-        double RMS = A->RMS_norm_diff(b, answer_check);
-
-        if (RMS > 1.e-2) {
-            cout << "sparse_CholeskySolve method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        } else
-        {
-            cout << "sparse_CholeskySolve method successful. "<< "Time spent to solve a "<< rowscols << "x" << rowscols <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        }
-
-        delete A;
-        delete sparse_mat;
-    }
-}
-
-void test_sparse_conjugate_gradient()
-{
-    vector<int> vs = {10,100};
-    for(int i=0;i<2;i++)
-    {   
-        double tol = 1.e-6;
-        int rowscols = vs[i];
-        
-        auto* A = new Matrix<double>(rowscols, rowscols, 3 * pow(rowscols, 1.5), 2 * pow(rowscols, 1.5));
-
-
-        double* b = new double[rowscols];
-        double* x = new double[rowscols];
-
-        // filling x with 0's as initial guess
-        // filling b with random ints
-        for (int i = 0; i < rowscols; i++)
-        {
-            b[i] = rand() % 10;
-            x[i] = 0;
-        }
-
-        int nnzs = pow(rowscols,2);
-        auto* sparse_mat = new CSRMatrix<double>(rowscols, rowscols, nnzs, true);
-
-        sparse_mat->dense2sparse(*A, sparse_mat);
-
-        clock_t start = clock();
-        sparse_mat->conjugate_gradient(b,x,1000,tol);
-        clock_t end = clock();
-
-        double* answer_check = new double[rowscols];
-        A->matVecMult(x,answer_check);
-
-        double RMS = A->RMS_norm_diff(b, answer_check);
-
-        if (RMS > 1.e-2) {
-            cout << "sparse_ConjugateGradient method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        } else
-        {
-            cout << "sparse_ConjugateGradient method successful. "<< "Time spent to solve a "<< rowscols << "x" << rowscols <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
-        }
-
-        delete A;
-        delete sparse_mat;
-    }
-}
-
-int main()
-{
-    cout << "Testing:" << "\n\n";
-    cout << "\nSPD Dense solver testing: \n";
-    test_jacobi_solver_matrix();
-    test_jacobi_solver_element();
-    test_LUSolve();
-    test_conjugate_gradient();
-    test_gauss_seidel();
-    test_choleskyDecomp();
-
-    //sparse solver tests
-    cout << "\nSparse solver testing:\n";
-    test_gauss_seidel_sparse(); //10x10 100x100 1000x1000
-    test_jacobi_sparse(); //10x10 100x100 1000x1000
-    test_sparse_conjugate_gradient();
-    //test_sparse_CholeskySolve();
-
-    //test_sparse_gauss_seidel(); //known solution
-    // test_sparse_jacobi(); //known solution
-    //test_sparse_matMatMult();
-    return 0;
-}
+//void test_jacobi_solver_matrix()
+//{
+//    float tol = 1e-6;
+//    vector<int> vs = {10,100,1000};
+//    for(int i=0;i<3;i++)
+//    {
+//        int rowscols = vs[i];
+//        
+//        auto* A = new Matrix<double>(rowscols, rowscols, 3 * pow(rowscols, 2), 2 * pow(rowscols, 2));
+//
+//        // set up arrays to store solutions and answer check
+//        double* x = new double[rowscols];
+//        double* b = new double[rowscols];
+//        double* answer_check = new double[rowscols];
+//
+//        for (int i = 0; i < rowscols; i++) {
+//            b[i] = rand() % 300 + 5;
+//        }
+//
+//        
+//        for(int i = 0; i<rowscols;i++)
+//        {
+//            x[i] = 0.0;
+//        }
+//        
+//
+//        clock_t start = clock();
+//        A->jacobi_solver_matrix(A,b,x,1000,true, tol);
+//    
+//        clock_t end = clock();
+//
+//        A->matVecMult(x,answer_check);
+//
+//        //if this is close to zero, the function works 
+//        double RMS = A->RMS_norm_diff(b, answer_check);
+//
+//        // if RMS is larger than e-6, function is not working
+//        if (RMS > 1.e-4) {
+//            cout << "Jacobi_solver_matrix method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        } else
+//        {
+//            cout << "Jacobi_solver_matrix method successful. "<< "Time spent to solve a "<< rowscols << "x" << rowscols <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        }
+//        delete[] b;
+//        delete[] x;
+//        delete[] answer_check;
+//        delete A;
+//    }
+//}
+//
+//void test_jacobi_solver_element()
+//{
+//    float tol = 1e-6;
+//    vector<int> vs = {10,100,1000};
+//    for(int i=0;i<3;i++)
+//    {
+//        int rows = vs[i];
+//	    int cols = vs[i];
+//        //auto *A = new Matrix<double>(rows, cols, rows*rows, cols*cols);
+//        auto* A = new Matrix<double>(rows, cols, 3 * pow(rows, 2), 2 * pow(rows, 2));
+//        double* b = new double[rows];
+//
+//        for (int i = 0; i < rows; i++) {
+//            b[i] = rand() % 300 + 5;
+//        }
+//
+//        // set up arrays to store solutions and answer check
+//        double* x = new double[rows];
+//        double* answer_check = new double[rows];
+//        for(int i = 0; i<rows;i++)
+//        {
+//            x[i] = 0.0;
+//        }
+//        
+//
+//        clock_t start = clock();
+//        A->jacobi_solver_element(A,b,x,1000,true, tol);
+//    
+//        clock_t end = clock();
+//
+//        A->matVecMult(x,answer_check);
+//
+//        //if this is close to zero, the function works 
+//        double RMS = A->RMS_norm_diff(b, answer_check);
+//
+//        // if RMS is larger than e-6, function is not working
+//        if (RMS > 1.e-4) {
+//            cout << "Jacobi_solver_element method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        } else
+//        {
+//            cout << "Jacobi_solver_element method successful. "<< "Time spent to solve a "<< rows << "x" << rows <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        }
+//        delete[] b;
+//        delete[] x;
+//        delete[] answer_check;
+//        delete A;
+//    }
+//}
+//
+//void test_LUSolve()
+//{
+//    vector<int> vs = {10,100,1000};
+//    for(int i=0;i<3;i++)
+//    {
+//        int rows = vs[i];
+//	    int cols = vs[i];
+//        auto *A = new Matrix<double>(rows, cols, rows*rows, cols*cols);
+//        double* b = new double[rows];
+//
+//        for (int i = 0; i < rows; i++) {
+//            b[i] = rand() % 300 + 5;
+//        }
+//
+//        // set up arrays to store solutions and answer check
+//        double* x = new double[rows];
+//        double* answer_check = new double[rows];
+//        for(int i = 0; i<rows;i++)
+//        {
+//            x[i] = 0.0;
+//        }
+//        
+//        clock_t start = clock();
+//        A->LUSolve(b,x,false);
+//        clock_t end = clock();
+//
+//        A->matVecMult(x,answer_check);
+//        //if this is close to zero, the function works 
+//        double RMS = A->RMS_norm_diff(b, answer_check);
+//
+//        // if RMS is larger than e-6, function is not working
+//        if (RMS > 1.e-2) {
+//            cout << "LUSolve method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        } else
+//        {
+//            cout << "LUsolve method successful. "<< "Time spent to solve a "<< rows << "x" << rows <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        }
+//        delete b;
+//        delete x;
+//        delete answer_check;
+//        delete A;
+//    }
+//}
+//
+//
+//void test_conjugate_gradient()
+//{
+//    double tol = 1.e-6;
+//    vector<int> vs = {10,100,1000};
+//    for(int i=0;i<3;i++)
+//    {
+//        int rows = vs[i];
+//	    int cols = vs[i];
+//        //auto *A = new Matrix<double>(rows, cols, rows*rows, cols*cols);
+//        auto* A = new Matrix<double>(rows, cols, 3 * pow(rows, 2), 2 * pow(rows, 2));
+//        double* b = new double[rows];
+//
+//        for (int i = 0; i < rows; i++) {
+//            b[i] = rand() % 300 + 5;
+//        }
+//
+//        // set up arrays to store solutions and answer check
+//        double* x = new double[rows];
+//        double* answer_check = new double[rows];
+//        for(int i = 0; i<rows;i++)
+//        {
+//            x[i] = 0.0;
+//        }
+//        
+//        //add tolerances. For LU use machine precision.
+//
+//        clock_t start = clock();
+//        A->conjugate_gradient(b,x,1000,tol);
+//    
+//        clock_t end = clock();
+//
+//        A->matVecMult(x,answer_check);
+//
+//        //if this is close to zero, the function works 
+//        double RMS = A->RMS_norm_diff(b, answer_check);
+//
+//        // if RMS is larger than e-6, function is not working
+//        if (RMS > 1.e-4) {
+//            cout << "Conjugate_gradient method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        } else
+//        {
+//            cout << "Conjugate_gradient method successful. "<< "Time spent to solve a "<< rows << "x" << rows <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        }
+//        delete[] b;
+//        delete[] x;
+//        delete[] answer_check;
+//        delete A;
+//    }
+//}
+//
+//void test_gauss_seidel()
+//{   
+//    float tol = 1e-6;
+//    vector<int> vs = {10,100,1000};
+//    for(int i=0;i<3;i++)
+//    {
+//        int rows = vs[i];
+//        int cols = vs[i];
+//
+//        //creating the SPD matrix
+//        auto* A = new Matrix<double>(rows, cols, 3 * pow(rows, 1.5), 2 * pow(rows, 1.5));
+//
+//        double* b = new double[rows];
+//        for (int i = 0; i < rows; i++) {
+//            b[i] = rand() % 300 + 5;
+//        }
+//
+//        // set up arrays to store solutions and answer check
+//        double* x = new double[rows];
+//        double* answer_check = new double[rows];
+//        for (int i = 0; i < rows; i++)
+//        {
+//            x[i] = 0.0;
+//        }
+//
+//        //using gauss-seidel method
+//        clock_t start = clock();
+//        A->gauss_seidel(*A, b, x, tol);
+//        clock_t end = clock();
+//
+//
+//        A->matVecMult(x,answer_check);
+//        double RMS = A->RMS_norm_diff(b, answer_check);
+//
+//        if (RMS > 1e-4) {
+//            cout << "Gauss_Seidel method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        } else
+//        {
+//            cout << "Gauss_Seidel method successful. "<< "Time spent to solve a "<< rows << "x" << rows <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        }
+//
+//        delete[] b;
+//        delete[] x;
+//        delete[] answer_check;
+//        delete A;
+//    }
+//}
+//
+//
+////known solution
+//void test_sparse_gauss_seidel()
+//{
+//    float tol = 1e-6;
+//    int rows = 4;
+//    int cols = 4;
+//
+//    int const nnzs = 8;
+//    auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
+//
+//    //sparse_mat->row_position[nnzs] = nnzs;
+//    //int vals[nnzs] = { 10,2,12,6,2,1,9 };
+//    int vals[nnzs] = { 10,2,12,2,6,1,1,9 };
+//    for (int i = 0; i < nnzs; i++)
+//    {
+//        sparse_mat->values[i] = vals[i];
+//    }
+//
+//    int col_ind[nnzs] = { 0,2,1,0,2,3,2,3};
+//    for (int i = 0; i < nnzs; i++)
+//    {
+//        sparse_mat->col_index[i] = col_ind[i];
+//    }
+//
+//    int row_ind[5] = { 0,2,3,6,8 };
+//
+//    for (int i = 0; i < 5; i++)
+//    {
+//        sparse_mat->row_position[i] = row_ind[i];
+//    }
+//
+//    // set up arrays to store b, solution and answer check
+//    double* x = new double[rows];
+//    double* b = new double[rows];
+//    double* answer_check = new double[rows];
+//
+//    //creating space for solution matrix (x) and matrix (b)
+//
+//    // filling x with 0's as initial guess
+//    for (int i = 0; i < rows; i++)
+//    {
+//        x[i] = 0.0;
+//    }
+//
+//    // filling b with i
+//    for (int i = 0; i < rows; i++)
+//    {
+//        b[i] = i;
+//    }
+//
+//    //using gauss-seidel method
+//    clock_t start = clock();
+//    sparse_mat->gauss_seidel_sparse(*sparse_mat, b, x, tol);
+//    clock_t end = clock();
+//
+//
+//    sparse_mat->matVecMult(x, answer_check);
+//    double RMS = sparse_mat->RMS_norm_diff(b, answer_check);
+//
+//    if (RMS > 1e-4) {
+//        cout << "Sparse Gauss Seidel with known input/output method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//    }
+//    else
+//    {
+//        cout << "Sparse Gauss Seidel with known input/output method successful. " << "Time spent to solve a " << rows << "x" << rows << " matrix: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//    }
+//
+//    delete[] b;
+//    delete[] x;
+//    delete[] answer_check;
+//    delete sparse_mat;
+//
+//}
+//
+////known solution
+//void test_sparse_jacobi()
+//{
+//    float tol = 1e-6;
+//    int rows = 4;
+//    int cols = 4;
+//
+//    int const nnzs = 8;
+//    auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
+//
+//    //sparse_mat->row_position[nnzs] = nnzs;
+//    int vals[nnzs] = { 10,2,12,2,6,1,1,9 };
+//    
+//    for (int i = 0; i < nnzs; i++)
+//    {
+//        sparse_mat->values[i] = vals[i];
+//    }
+//
+//    int col_ind[nnzs] = { 0,2,1,0,2,3,2,3 };
+//    for (int i = 0; i < nnzs; i++)
+//    {
+//        sparse_mat->col_index[i] = col_ind[i];
+//    }
+//
+//   /* int row_ind[5] = { 0,2,3,5,7 };*/
+//    int row_ind[5] = { 0,2,3,6,8 };
+//    for (int i = 0; i < 5; i++)
+//    {
+//        sparse_mat->row_position[i] = row_ind[i];
+//    }
+//
+//    // set up arrays to store b, solution and answer check
+//    double* x = new double[rows];
+//    double* b = new double[rows];
+//    double* answer_check = new double[rows];
+//
+//    //creating space for solution matrix (x) and matrix (b)
+//
+//    // filling x with 0's as initial guess
+//    for (int i = 0; i < rows; i++)
+//    {
+//        x[i] = 0.0;
+//    }
+//
+//    // filling b with i
+//    for (int i = 0; i < rows; i++)
+//    {
+//        b[i] = i;
+//    }
+//
+//    //using jacobi method
+//    clock_t start = clock();
+//    sparse_mat->jacobi_solver_sparse(sparse_mat, b, x, 1000, true, tol);
+//    clock_t end = clock();
+//
+//
+//    sparse_mat->matVecMult(x, answer_check);
+//    double RMS = sparse_mat->RMS_norm_diff(b, answer_check);
+//
+//    if (RMS > 1e-4) {
+//        cout << "Sparse Jacobi with known input/output method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//    }
+//    else
+//    {
+//        cout << "Sparse Jacobi with known input/output method successful. " << "Time spent to solve a " << rows << "x" << rows << " matrix: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//    }
+//
+//    delete[] b;
+//    delete[] x;
+//    delete[] answer_check;
+//    delete sparse_mat;
+//
+//}
+//
+//// random CSR matrices of increasing size
+//void test_gauss_seidel_sparse()
+//{
+//    float tol = 1.e-6;
+//    vector<int> vs = {10,100,1000 };
+//    //vector<int> vs = { 10,100 };
+//    for (int i = 0; i < 3; i++)
+//    {
+//        int nnzs = 0;
+//        int rows = vs[i];
+//        int cols = vs[i];
+//        //auto* A = new Matrix<double>(rows, cols, rows * rows, cols * cols);
+//        auto* A = new Matrix<double>(rows, cols, 3 * pow(rows, 2), 2 * pow(rows, 2));
+//        //A->SPDMatrixcheck();
+//        //A->printMatrix();
+//        for (int j = 0; j < A->rows * A->cols; j++)
+//        {
+//            int val = A->values[j];
+//            if (val != 0)
+//            {
+//                nnzs += 1;
+//            }
+//        }
+//        auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
+//        
+//        auto* sparse_mat_2 = new CSRMatrix<double>(rows, cols, nnzs, true);
+//        sparse_mat->dense2sparse(*A, sparse_mat_2);
+//
+//        double* b = new double[rows];
+//
+//        for (int i = 0; i < rows; i++) {
+//            b[i] = rand() % 300 + 5;
+//        }
+//        
+//        // set up arrays to store solutions and answer check
+//        double* x = new double[rows];
+//        double* answer_check = new double[rows];
+//        for (int i = 0; i < rows; i++)
+//        {
+//            x[i] = 0.0;
+//        }
+//
+//        //add tolerances. For LU use machine precision.
+//
+//        clock_t start = clock();
+//        sparse_mat_2->gauss_seidel_sparse(*sparse_mat_2, b, x, tol);
+//
+//        clock_t end = clock();
+//
+//        A->matVecMult(x, answer_check);
+//
+//        //if this is close to zero, the function works 
+//        double RMS = A->RMS_norm_diff(b, answer_check);
+//
+//        // if RMS is larger than e-6, function is not working
+//        if (RMS > 1.e-4) {
+//            cout << "Sparse Gauss-seidel method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        }
+//        else
+//        {
+//            cout << "Sparse Gauss-seidel method successful. " << "Time spent to solve a " << rows << "x" << rows << " matrix: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        }
+//        delete[] b;
+//        delete[] x;
+//        delete[] answer_check;
+//        delete A;
+//        delete sparse_mat;
+//        delete sparse_mat_2;
+//    }
+//
+//}
+//
+//void test_jacobi_sparse()
+//{
+//    float tol = 1.e-6;
+//    vector<int> vs = { 10,100,1000 };
+//    for (int i = 0; i < 3; i++)
+//    {
+//        int nnzs = 0;
+//        int rows = vs[i];
+//        int cols = vs[i];
+//        //auto* A = new Matrix<double>(rows, cols, rows * rows, cols * cols);
+//        auto* A = new Matrix<double>(rows, cols, 3 * pow(rows, 2), 2 * pow(rows, 2));
+//        //A->printMatrix();
+//
+//        for (int j = 0; j < A->rows * A->cols; j++)
+//        {
+//            int val = A->values[j];
+//            if (val != 0)
+//            {
+//                nnzs += 1;
+//            }
+//        }
+//
+//        auto* sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
+//        auto* sparse_mat_2 = new CSRMatrix<double>(rows, cols, nnzs, true);
+//
+//        sparse_mat->dense2sparse(*A, sparse_mat_2);
+//
+//        double* b = new double[rows];
+//
+//        for (int i = 0; i < rows; i++) {
+//            b[i] = rand() % 300 + 5;
+//        }
+//
+//        // set up arrays to store solutions and answer check
+//        double* x = new double[rows];
+//        double* answer_check = new double[rows];
+//        for (int i = 0; i < rows; i++)
+//        {
+//            x[i] = 0.0;
+//        }
+//
+//        //add tolerances. For LU use machine precision.
+//
+//        clock_t start = clock();
+//        sparse_mat_2->jacobi_solver_sparse(sparse_mat_2, b, x, 100, true, tol);
+//        clock_t end = clock();
+//
+//        A->matVecMult(x, answer_check);
+//
+//        //if this is close to zero, the function works 
+//        double RMS = A->RMS_norm_diff(b, answer_check);
+//
+//        // if RMS is larger than e-6, function is not working
+//        if (RMS > 1.e-4) {
+//            cout << "Sparse Jacobi method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        }
+//        else
+//        {
+//            cout << "Sparse Jacobi method successful. " << "Time spent to solve a " << rows << "x" << rows << " matrix: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        }
+//        delete[] b;
+//        delete[] x;
+//        delete[] answer_check;
+//        delete A;
+//        delete sparse_mat;
+//        delete sparse_mat_2;
+//    }
+//
+//}
+//
+//void test_choleskyDecomp()
+//{   
+//    vector<int> vs = {10,100,1000};
+//    for(int i=0;i<3;i++)
+//    {
+//        int rowscols = vs[i];
+//        
+//        auto* A = new Matrix<double>(rowscols, rowscols, 3 * pow(rowscols, 1.5), 2 * pow(rowscols, 1.5));
+//
+//        double* b = new double[rowscols];
+//        double* x = new double[rowscols];
+//
+//        // filling x with 0's as initial guess
+//        // filling b with random ints
+//        for (int i = 0; i < rowscols; i++)
+//        {
+//            b[i] = rand() % 10;
+//            x[i] = 0;
+//        }
+//
+//        auto* L = new Matrix<double>(rowscols, rowscols, true);
+//
+//        clock_t start = clock();
+//        A->CholeskySolve(b,x);
+//        clock_t end = clock();
+//
+//        double* answer_check = new double[rowscols];
+//        A->matVecMult(x,answer_check);
+//
+//        double RMS = A->RMS_norm_diff(b, answer_check);
+//
+//        if (RMS > 1.e-2) {
+//            cout << "CholeskySolve method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        } else
+//        {
+//            cout << "CholeskySolve method successful. "<< "Time spent to solve a "<< rowscols << "x" << rowscols <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        }
+//
+//
+//        delete A;
+//        delete L;
+//        delete x;
+//        delete b;
+//        delete answer_check;
+//    }
+//}
+//
+//void test_sparse_CholeskySolve()
+//{
+//    vector<int> vs = {10,100};
+//    for(int i=0;i<3;i++)
+//    {
+//        int rowscols = vs[i];
+//        
+//        auto* A = new Matrix<double>(rowscols, rowscols, 3 * pow(rowscols, 1.5), 2 * pow(rowscols, 1.5));
+//
+//
+//        double* b = new double[rowscols];
+//        double* x = new double[rowscols];
+//
+//        // filling x with 0's as initial guess
+//        // filling b with random ints
+//        for (int i = 0; i < rowscols; i++)
+//        {
+//            b[i] = rand() % 10;
+//            x[i] = 0;
+//        }
+//
+//        int nnzs = pow(rowscols,2);
+//        auto* sparse_mat = new CSRMatrix<double>(rowscols, rowscols, nnzs, true);
+//
+//        sparse_mat->dense2sparse(*A, sparse_mat);
+//
+//        clock_t start = clock();
+//        sparse_mat->CholeskySolve(b,x);
+//        clock_t end = clock();
+//        double* answer_check = new double[rowscols];
+//        A->matVecMult(x,answer_check);
+//
+//        double RMS = A->RMS_norm_diff(b, answer_check);
+//
+//        if (RMS > 1.e-2) {
+//            cout << "sparse_CholeskySolve method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        } else
+//        {
+//            cout << "sparse_CholeskySolve method successful. "<< "Time spent to solve a "<< rowscols << "x" << rowscols <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        }
+//
+//        delete A;
+//        delete sparse_mat;
+//    }
+//}
+//
+//void test_sparse_conjugate_gradient()
+//{
+//    vector<int> vs = {10,100};
+//    for(int i=0;i<2;i++)
+//    {   
+//        double tol = 1.e-6;
+//        int rowscols = vs[i];
+//        
+//        auto* A = new Matrix<double>(rowscols, rowscols, 3 * pow(rowscols, 1.5), 2 * pow(rowscols, 1.5));
+//
+//
+//        double* b = new double[rowscols];
+//        double* x = new double[rowscols];
+//
+//        // filling x with 0's as initial guess
+//        // filling b with random ints
+//        for (int i = 0; i < rowscols; i++)
+//        {
+//            b[i] = rand() % 10;
+//            x[i] = 0;
+//        }
+//
+//        int nnzs = pow(rowscols,2);
+//        auto* sparse_mat = new CSRMatrix<double>(rowscols, rowscols, nnzs, true);
+//
+//        sparse_mat->dense2sparse(*A, sparse_mat);
+//
+//        clock_t start = clock();
+//        sparse_mat->conjugate_gradient(b,x,1000,tol);
+//        clock_t end = clock();
+//
+//        double* answer_check = new double[rowscols];
+//        A->matVecMult(x,answer_check);
+//
+//        double RMS = A->RMS_norm_diff(b, answer_check);
+//
+//        if (RMS > 1.e-2) {
+//            cout << "sparse_ConjugateGradient method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        } else
+//        {
+//            cout << "sparse_ConjugateGradient method successful. "<< "Time spent to solve a "<< rowscols << "x" << rowscols <<" matrix: "<< (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+//        }
+//
+//        delete A;
+//        delete sparse_mat;
+//    }
+//}
+//
+//int main_test_solvers()
+//{
+//    cout << "Testing:" << "\n\n";
+//    cout << "\nSPD Dense solver testing: \n";
+//    test_jacobi_solver_matrix();
+//    test_jacobi_solver_element();
+//    test_LUSolve();
+//    test_conjugate_gradient();
+//    test_gauss_seidel();
+//    test_choleskyDecomp();
+//
+//    //sparse solver tests
+//    cout << "\nSparse solver testing:\n";
+//    test_gauss_seidel_sparse(); //10x10 100x100 1000x1000
+//    test_jacobi_sparse(); //10x10 100x100 1000x1000
+//    test_sparse_conjugate_gradient();
+//    //test_sparse_CholeskySolve();
+//
+//    //test_sparse_gauss_seidel(); //known solution
+//    // test_sparse_jacobi(); //known solution
+//    //test_sparse_matMatMult();
+//    return 0;
+//}

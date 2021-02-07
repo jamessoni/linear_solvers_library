@@ -1,5 +1,6 @@
 #include <iostream>
 #include "CSRMatrix.h"
+#include <vector>
 
 // Constructor - using an initialisation list here
 template <class T>
@@ -244,7 +245,7 @@ float CSRMatrix<T>::RMS_norm_diff(T* vec_a, T* vec_b)
 }
 
 template <class T>
-void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>& a, T* b, T* x_init, float tol)
+void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, float tol)
 {
     /*
     Gauss-seidel solver implementation
@@ -294,12 +295,12 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>& a, T* b, T* x_init, float t
 
             //A_ii = 0;
             //looping through storing the diagonal entry in A_ii
-            for (int val_index = a.row_position[i]; val_index < a.row_position[i + 1]; val_index++)
+            for (int val_index = A->row_position[i]; val_index < A->row_position[i + 1]; val_index++)
             {
 
-                if (a.col_index[val_index] == i)
+                if (A->col_index[val_index] == i)
                 {
-                    A_ii = a.values[val_index];
+                    A_ii = A->values[val_index];
                     //once A_ii its value stored - break to prevent overwriting
                     if (A_ii != 0)
                     {
@@ -310,14 +311,14 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>& a, T* b, T* x_init, float t
             x_init[i] = b[i] / A_ii;
             //using compressed sparse row matVecMult 
             //looping over the columns 
-            for (int val_index = a.row_position[i]; val_index < a.row_position[i + 1]; val_index++)
+            for (int val_index = A->row_position[i]; val_index < A->row_position[i + 1]; val_index++)
             {
-                if (a.col_index[val_index] == i)
+                if (A->col_index[val_index] == i)
                 {
                     continue;
                 }
                 //computing x[i] = x[i] - ((A[i][j] * x[j]) / A[i][i])
-                x_init[i] = x_init[i] - (a.values[val_index] * x_init[col_index[val_index]]) / A_ii;
+                x_init[i] = x_init[i] - (A->values[val_index] * x_init[col_index[val_index]]) / A_ii;
             }
         }
         // calculating the rms norm difference between the previous
@@ -347,8 +348,8 @@ int CSRMatrix<T>::getv(int row,int col)
     return -1;
 }
 
-// Do matrix matrix multiplication
-// output = this * mat_right
+ //Do matrix matrix multiplication
+ //output = this * mat_right
 template <class T>
 CSRMatrix<T>* CSRMatrix<T>::matMatMult(CSRMatrix<T>& mat_right)
 {
@@ -651,7 +652,7 @@ void CSRMatrix<T>::bsubstitution(T* y, T* x)
 }
 
 template <class T>
-void CSRMatrix<T>::CholeskySolve(T* b, T* x)
+void CSRMatrix<T>::CholeskySolve(Matrix<T>* A, T* b, T* x)
 {   
     //Chelosky decomposing our Matrix A
     CSRMatrix<T>* Chol = this->CholeskyDecomp();
