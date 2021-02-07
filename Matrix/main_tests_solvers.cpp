@@ -15,8 +15,8 @@
 
 using namespace std;
 
-float tol = 1.e-12;
-vector<int> vs = {10,100,200,300,500,1000,1500,2000,2500,5000};
+float tol = 1.e-2;
+vector<int> vs = {10,100,200,300,500,1000,2000,3000,5000};
 
 
 void test_jacobi_solver_matrix()
@@ -138,7 +138,7 @@ void test_LUSolve()
         double RMS = A->RMS_norm_diff(b, answer_check);
          
         // if RMS is larger than e-6, function is not working
-        if (RMS > 1.e-2) {
+        if (RMS > tol) {
             cout << "LUSolve method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
         } else
         {
@@ -187,7 +187,7 @@ void test_conjugate_gradient()
         double RMS = A->RMS_norm_diff(b, answer_check);
          
         // if RMS is larger than e-6, function is not working
-        if (RMS > 1.e-4) {
+        if (RMS > tol) {
             cout << "Conjugate_gradient method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
         } else
         {
@@ -232,7 +232,7 @@ void test_gauss_seidel()
         A->matVecMult(x,answer_check);
         double RMS = A->RMS_norm_diff(b, answer_check);
          
-        if (RMS > 1e-4) {
+        if (RMS > tol) {
             cout << "Gauss_Seidel method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
         } else
         {
@@ -305,7 +305,8 @@ void test_sparse_gauss_seidel()
     sparse_mat->matVecMult(x, answer_check);
     double RMS = sparse_mat->RMS_norm_diff(b, answer_check);
      
-    if (RMS > 1e-4) {
+    cout << RMS
+    if (RMS > tol) {
         cout << "Sparse Gauss Seidel with known input/output method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
     }
     else
@@ -378,7 +379,7 @@ void test_sparse_jacobi()
     sparse_mat->matVecMult(x, answer_check);
     double RMS = sparse_mat->RMS_norm_diff(b, answer_check);
      
-    if (RMS > 1e-4) {
+    if (RMS > tol) {
         cout << "Sparse Jacobi with known input/output method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
     }
     else
@@ -445,7 +446,7 @@ void test_gauss_seidel_sparse()
         double RMS = A->RMS_norm_diff(b, answer_check);
          
         // if RMS is larger than e-6, function is not working
-        if (RMS > 1.e-4) {
+        if (RMS > tol) {
             cout << "Sparse Gauss-seidel method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
         }
         else
@@ -513,7 +514,7 @@ void test_jacobi_sparse()
         double RMS = A->RMS_norm_diff(b, answer_check);
          
         // if RMS is larger than e-6, function is not working
-        if (RMS > 1.e-4) {
+        if (RMS > tol) {
             cout << "Sparse Jacobi method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
         }
         else
@@ -578,7 +579,7 @@ void test_choleskyDecomp()
 
 void test_sparse_CholeskySolve()
 {
-    for(int i=0;i<2;i++)
+    for(int i=0;i<vs.size();i++)
     {
         int rowscols = vs[i];
         
@@ -656,7 +657,7 @@ void test_sparse_conjugate_gradient()
         double RMS = A->RMS_norm_diff(b, answer_check);
 
           
-        if (RMS > 1.e-2) {
+        if (RMS > tol) {
             cout << "sparse_ConjugateGradient method failed. " << "Time spent to solve: " << (double) (end-start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
         } else
         {
@@ -672,19 +673,19 @@ int main()
 {
     cout << "Testing:" << "\n\n";
     cout << "\nSPD Dense solver testing: \n";
-    //test_jacobi_solver_matrix();
-    //test_jacobi_solver_element();
+    test_jacobi_solver_matrix();
+    test_jacobi_solver_element();
     test_LUSolve();
-    //test_conjugate_gradient();
-    //test_gauss_seidel();
-    //test_choleskyDecomp();
+    test_conjugate_gradient();
+    test_gauss_seidel();
+    test_choleskyDecomp();
 
     //sparse solver tests
     cout << "\nSparse solver testing:\n";
-    //test_gauss_seidel_sparse(); //10x10 100x100 1000x1000
-    //test_jacobi_sparse(); //10x10 100x100 1000x1000
-    //test_sparse_conjugate_gradient();
-    //test_sparse_CholeskySolve();
+    test_gauss_seidel_sparse(); //10x10 100x100 1000x1000
+    test_jacobi_sparse(); //10x10 100x100 1000x1000
+    test_sparse_conjugate_gradient();
+    test_sparse_CholeskySolve();
 
     // test_sparse_gauss_seidel(); //known solution
     // test_sparse_jacobi(); //known solution
