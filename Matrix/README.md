@@ -152,6 +152,7 @@ Fulfilling the inputs of the solver (refer to the declared solver in header file
         //using gauss-seidel method
         A->gauss_seidel(*A, b, x, tol);
 '''
+
 ###### Documentation:
 The class Matrix has three constructors and a destructor:
 
@@ -170,6 +171,7 @@ The third constructor is useful for testing: it takes two ints for the number of
 It creates a matrix with diagonal values randomised between diag_max and diag_min and all other entries = 1.
 
 Example call:
+
 '''
 auto *dense_mat = new Matrix<double>(5, 5, 10,-10);
 dense_mat->printMatrix();
@@ -183,11 +185,70 @@ Printing matrix
 1 1 1 1 -1
 '''
 
+Two methods to display the Matrix's values:
+
 void printValues();
 virtual void printMatrix();
+
+A method for matrix-matrix multiplication. A.B=AB
+It takes two matrices as input: one is the matrix to multiply (B) by and the other is the output matrix AB.
 void matMatMult(Matrix<T>& mat_right, Matrix<T>& output);
 
+Example:
+'''
+auto *dense_mat_left = new Matrix<double>(3, 3, 5,-5);
+auto *dense_mat_right = new Matrix<double>(3, 3, 5,-5);
+auto *dense_mat_output = new Matrix<double>(3, 3, true);
+dense_mat_left->matMatMult(dense_mat_right,dense_mat_output);
+-------------
+Printing matrix
+
+-4 1 1
+1 -3 1
+1 1 -1 
+Printing matrix
+
+-5 1 1
+1 -1 1
+1 1 -1
+Printing matrix
+
+22 -4 -4
+-7 5 -3
+-5 -1 3
+'''
+
+A method to check whether a Matrix is Symmetric Positive Definite.
+The 
+It returns a bool as well as printing a statement.
 bool SPDMatrixcheck();
+
+Example:
+'''
+auto *SPDM = new Matrix<double>(3, 3, 10,5);
+SPDM->printMatrix();
+bool spd = SPDM->SPDMatrixcheck();
+std::cout << spd;
+SPDM->values[0] = 0;
+bool spd = SPDM->SPDMatrixcheck();
+std::cout << spd;
+-------------
+Printing matrix
+
+-4 1 1
+1 -3 1
+1 1 -1 
+Printing matrix
+
+-5 1 1
+1 -1 1
+1 1 -1
+Printing matrix
+
+22 -4 -4
+-7 5 -3
+-5 -1 3
+'''
 
 void matVecMult(T* vec, T* output);
 void vecVecsubtract(T* vec_a, T* vec_b, T* output);
