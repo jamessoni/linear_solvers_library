@@ -235,7 +235,8 @@ Example:
         1 1 0 1
         1 1 1 0
 
-These two methods decompose the input matrix into L and U, where SLUDecomp() does it in-place.
+These two methods decompose the input matrix into L and U, where SLUDecomp() stores L and U in a single matrix.
+Unfortunately row pivoting has not been implemented and so the user needs to be careful.
 void LUDecomp(Matrix<T>& L, Matrix<T>& U);
 void SLUDecomp(Matrix<T>* LU);
 
@@ -284,8 +285,10 @@ Example:
         0.117041 0.120508 8.83016 0
         0.117041 0.120508 0.110052 5.99664
 
-The three substitution method are implementations of solving the system LUx = b.
-These are further used in the direct implementation of the cholesky solver.
+The three substitution method are used to solve the system LUx = b.
+They assume an input of a lower and upper triangular matrix, respectively. Values above or below the diagonal will be ignored.
+The fsubstitutionLU method assumes that diagonal elements are equal to 1 (as we are storing L and U on the same matrix).
+
 void fsubstitution(Matrix<T>& L, T* y,T* b);
 void fsubstitutionLU(Matrix<T>& L, T* y,T* b);
 void bsubstitution(Matrix<T>& U, T* x, T* y);
@@ -308,7 +311,9 @@ void conjugate_gradient(Matrix<T>* A, T* b, T* x, int maxIter, float tol);
 A few non iterative solver methods for the system Ax = b are also provided.
 These generally achieve higher precisions, but take longer to execute.
 
-These are two direct solving methods. LUsolve using LU decomposition, Cholesky with LL<sup>T</sup> decomposition, both coupled with back/forward.
+These are two direct solving methods. LUsolve using LU decomposition, Cholesky with LL<sup>T</sup> decomposition, both using back/forward substitution methods from their class.
+The bool parameter inplace in LUSolve is to decide whether we want to allocate new memory to store the LU decomposed matrix or are happy to "destroy" our original matrix
+
 void LUSolve(Matrix<T>* A, double* b, double* output, bool inplace);
 void CholeskySolve(Matrix<T>* A, T* b, T* x);
 
