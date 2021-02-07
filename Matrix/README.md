@@ -30,7 +30,8 @@ Terminal:
 
         $> g++ main_matrix.cpp -fpermissive
         $> .\a
-
+        
+The above main_matrix.cpp call will allow the user to enter the User Interface of the Matrix Library. Within such, enables features of the different aspects of the linear solver library to be used. With the users specified input row value, selected solver and on what matrix (dense or sparse); a randomly created SPD matrix and b vector will be used showing the example functionality. Further, you can select the testing framework, which will show a timing comparison of the differing solvers.
 
 #### Linear Solvers:
 Within this library there exists various linear solvers; each with their enabled callable method within classes Matrix or CSRMatrix. They can all be accessed and used with the above main_matrix.cpp providing a UI platform to see examples as well as called specifically with the required inputs.
@@ -47,10 +48,9 @@ Within this library there exists various linear solvers; each with their enabled
 ##### Dense Matrices:
 The values of the dense matrices will depend on whether you as the user wish to input a specified matrix.
 One example shown below:
-'''
+
     int rows = 4;
     int cols = 4;
-
     //creating matrix
     auto *dense_mat = new Matrix<double>(rows, cols, true);
 
@@ -66,11 +66,11 @@ One example shown below:
     [...]
 
     delete dense_mat; 
-'''
+    
 The example above declares a dense matrix which has further been filled with the values present in the vector (vs). 
 However, in providing ease of use of the system - there is functuality to create a random SPD matrix if necessary.
 Shown below:
-'''
+
     int rows = 4;
     int cols = 4;
 
@@ -80,14 +80,13 @@ Shown below:
     [...]
 
     delete A;
-'''
+    
 This above with specific argument inputs calls class constructor; in turn producing a randomised Diagonal Dominant Positive Definite Matrix. This constructor call further ensures the matrix produced will converge with specified linear solvers adhering to both diagonal dominance and/or positive definiteness.
 
 ##### Sparse Matrices:
 Further, sparse matrices like dense share familiar attributes and therefore call from both Matrix and sub-class CSRMatrix.
 The sparse matrices are defined through compressed sparse row (CSR) format - pertaining to three One Dimensional arrays that respectively enables fast access of non zero values for methods and calculations.
 Example of CSR below:
-'''
 
     int rows = 4;
     int cols = 4;
@@ -119,12 +118,11 @@ Example of CSR below:
 
     [...]
     delete sparse_mat;
-'''
+
 ##### Solvers
 To call the linear solvers (for both dense and sparse) it will require using an object matrix. This will include calling a constructor which randomises its Matrix element values (e.g. SPD constructor) or a constructor where you wish to fill it with values.
 Fulfilling the inputs of the solver (refer to the declared solver in header file), you can call a solver as follows:
 ###### creating inputs SPD Matrix, 1D arrays x and b:
-'''
 
         float tol = 1e-6;
         int rows = 4;
@@ -145,24 +143,20 @@ Fulfilling the inputs of the solver (refer to the declared solver in header file
         {
             x[i] = 0.0;
         }
-'''
+
 ###### Example of solver call:
-'''
             
         //using gauss-seidel method
         A->gauss_seidel(*A, b, x, tol);
-'''
 
 ###### Documentation:
 The class Matrix has three constructors and a destructor:
 
-'''
-Matrix(int rows, int cols, bool preallocate);
-Matrix(int rows, int cols, T *values_ptr);
-Matrix(int rows, int cols, int diag_max, int diag_min);
+        Matrix(int rows, int cols, bool preallocate);
+        Matrix(int rows, int cols, T *values_ptr);
+        Matrix(int rows, int cols, int diag_max, int diag_min);
 
-virtual ~Matrix();
-'''
+        virtual ~Matrix();
 
 The first constructor takes two ints for the number of rows and the number of columns and a further bool for the option to preallocate memory.
 The second constructor takes two ints for the number of rows and the number of columns and a pointer to an array of values.
@@ -172,18 +166,16 @@ It creates a matrix with diagonal values randomised between diag_max and diag_mi
 
 Example call:
 
-'''
-auto *dense_mat = new Matrix<double>(5, 5, 10,-10);
-dense_mat->printMatrix();
--------------
-Printing matrix
+        auto *dense_mat = new Matrix<double>(5, 5, 10,-10);
+        dense_mat->printMatrix();
+        -------------
+        Printing matrix
 
--9 1 1 1 1
-1 -3 1 1 1 
-1 1 -6 1 1
-1 1 1 -10 1
-1 1 1 1 -1
-'''
+        -9 1 1 1 1
+        1 -3 1 1 1 
+        1 1 -6 1 1
+        1 1 1 -10 1
+        1 1 1 1 -1
 
 Two methods to display the Matrix's values:
 
@@ -195,28 +187,27 @@ It takes two matrices as input: one is the matrix to multiply (B) by and the oth
 void matMatMult(Matrix<T>& mat_right, Matrix<T>& output);
 
 Example:
-'''
-auto *dense_mat_left = new Matrix<double>(3, 3, 5,-5);
-auto *dense_mat_right = new Matrix<double>(3, 3, 5,-5);
-auto *dense_mat_output = new Matrix<double>(3, 3, true);
-dense_mat_left->matMatMult(dense_mat_right,dense_mat_output);
--------------
-Printing matrix
 
--4 1 1
-1 -3 1
-1 1 -1 
-Printing matrix
+        auto *dense_mat_left = new Matrix<double>(3, 3, 5,-5);
+        auto *dense_mat_right = new Matrix<double>(3, 3, 5,-5);
+        auto *dense_mat_output = new Matrix<double>(3, 3, true);
+        dense_mat_left->matMatMult(dense_mat_right,dense_mat_output);
+        -------------
+        Printing matrix
 
--5 1 1
-1 -1 1
-1 1 -1
-Printing matrix
+        -4 1 1
+        1 -3 1
+        1 1 -1 
+        Printing matrix
 
-22 -4 -4
--7 5 -3
--5 -1 3
-'''
+        -5 1 1
+        1 -1 1
+        1 1 -1
+        Printing matrix
+
+        22 -4 -4
+        -7 5 -3
+        -5 -1 3
 
 A method to check whether a Matrix is Symmetric Positive Definite.
 The 
@@ -224,68 +215,66 @@ It returns a bool as well as printing a statement.
 bool SPDMatrixcheck();
 
 Example:
-'''
-auto *SPDM = new Matrix<double>(3, 3, 10,5);
-SPDM->printMatrix();
-bool spd = SPDM->SPDMatrixcheck();
-std::cout << "\n"<< spd<< "\n";
-SPDM->values[4] = 0;
-SPDM->printMatrix();
-spd = SPDM->SPDMatrixcheck();
-std::cout << "\n" << spd<< "\n";
--------------
-Printing matrix
 
-6 1 1
-1 12 1
-1 1 9
+        auto *SPDM = new Matrix<double>(3, 3, 10,5);
+        SPDM->printMatrix();
+        bool spd = SPDM->SPDMatrixcheck();
+        std::cout << "\n"<< spd<< "\n";
+        SPDM->values[4] = 0;
+        SPDM->printMatrix();
+        spd = SPDM->SPDMatrixcheck();
+        std::cout << "\n" << spd<< "\n";
+        -------------
+        Printing matrix
 
-Passes weak SPD check
-1
-Printing matrix
+        6 1 1
+        1 12 1
+        1 1 9
 
-6 1 1
-1 0 1
-1 1 9
+        Passes weak SPD check
+        1
+        Printing matrix
 
-May not converge with chosen solvers
-0
-'''
+        6 1 1
+        1 0 1
+        1 1 9
+
+        May not converge with chosen solvers
+        0
 
 A method for matrix vector multiplication Ax = b (in this case x is vec, b is output)
 void matVecMult(T* vec, T* output);
 
 Example:
-'''
-auto *Mat = new Matrix<double>(3, 3, true);
 
-//Filling our matrix with values
-double values[9] = {3,1,1,1,3,1,1,1,2};
-for(int i = 0;i<9; i++)
-{
-    Mat->values[i]=values[i];
-}
+        auto *Mat = new Matrix<double>(3, 3, true);
 
-Mat->printMatrix();
-double b[3] = {2,3,4};
-double x[3];
-Mat->matVecMult(b,x);
+        //Filling our matrix with values
+        double values[9] = {3,1,1,1,3,1,1,1,2};
+        for(int i = 0;i<9; i++)
+        {
+            Mat->values[i]=values[i];
+        }
 
-//printing x
-for (int i = 0; i<3; i++)
-{
-    cout << x[i] << endl;
-}
--------------
-Printing matrix
+        Mat->printMatrix();
+        double b[3] = {2,3,4};
+        double x[3];
+        Mat->matVecMult(b,x);
 
-3 1 1
-1 3 1
-1 1 2
-13
-15
-13
-'''
+        //printing x
+        for (int i = 0; i<3; i++)
+        {
+            cout << x[i] << endl;
+        }
+        -------------
+        Printing matrix
+
+        3 1 1
+        1 3 1
+        1 1 2
+        13
+        15
+        13
 
 Two methods to perform vector vector subtraction and to calculate the RMS difference between two vectors.
 void vecVecsubtract(T* vec_a, T* vec_b, T* output);
