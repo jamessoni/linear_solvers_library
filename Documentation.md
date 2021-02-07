@@ -235,7 +235,7 @@ Example:
         1 1 0 1
         1 1 1 0
 
-These two methods decompose the input matrix into L and U, where SLUDecomp() stores L and U in a single matrix.
+These two methods decompose the input matrix into L and U, where SLUDecomp() stores L and U in a single matrix LU.
 Unfortunately row pivoting has not been implemented and so the user needs to be careful.
 void LUDecomp(Matrix<T>& L, Matrix<T>& U);
 void SLUDecomp(Matrix<T>* LU);
@@ -311,7 +311,7 @@ void conjugate_gradient(Matrix<T>* A, T* b, T* x, int maxIter, float tol);
 A few non iterative solver methods for the system Ax = b are also provided.
 These generally achieve higher precisions, but take longer to execute.
 
-These are two direct solving methods. LUsolve using LU decomposition, Cholesky with LL<sup>T</sup> decomposition, both using back/forward substitution methods from their class.
+LUsolve uses LU decomposition, Cholesky uses LL<sup>T</sup> decomposition, both using back/forward substitution methods.
 The bool parameter inplace in LUSolve is to decide whether we want to allocate new memory to store the LU decomposed matrix or are happy to "destroy" our original matrix
 
 void LUSolve(Matrix<T>* A, double* b, double* output, bool inplace);
@@ -405,10 +405,10 @@ A method for matrix-matrix multiplication. A.B=AB
 It takes two matrices as input: one is the matrix to multiply (B) by and the other is the output matrix AB.
 CSRMatrix<T>* matMatMult(CSRMatrix<T>& mat_right);
 
-This method transposes the Cholesky Matrix.
+This method transposes a CSR Matrix, but only if it is lower triangular.
 void transposeiflower();
 
-Cholesky decomposition decomposes the positive definite matrix into a lower triangular and its conjugate component.
+Cholesky decomposition decomposes the positive definite CSR matrix into a lower triangular and its conjugate component.
 CSRMatrix<T>* CholeskyDecomp();
 
 Example:
@@ -436,7 +436,7 @@ Example:
     row_position: 0 1 3 6
     col_index: 0 0 1 0 1 2
 
-Forward and back substitution to solve LUx = b, where U is the upper triangular with units on the diagonal and L is the lower triangular.
+Forward and backward substitutions to solve LUx = b, where U is the upper triangular with units on the diagonal and L is the lower triangular.
 void fsubstitution(T* b, T* y);
 void bsubstitution(T* y, T* x);
 
