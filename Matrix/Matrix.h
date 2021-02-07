@@ -33,10 +33,10 @@ public:
    float RMS_norm_diff(T* vec_a, T* vec_b);
 
    // Jacobi solver element-wise
-   void jacobi_solver_element(T* b, T* output, int maxIter, bool initialised, float tol);
+   void jacobi_solver_element(Matrix<T>* A,T* b, T* output, int maxIter, bool initialised, float tol);
 
    // Functions for Jacobi solver matrix
-   void jacobi_solver_matrix(double* b, double* output, int maxIter, bool initialised, float tol);
+   void jacobi_solver_matrix(Matrix<T>* A, double* b, double* output, int maxIter, bool initialised, float tol);
    void jacobi_decomposition(Matrix<T>* D, Matrix<T>* N);
 	
    void LUDecomp(Matrix<T>& L, Matrix<T>& U);

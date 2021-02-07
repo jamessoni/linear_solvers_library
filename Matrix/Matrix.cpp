@@ -315,8 +315,8 @@ void Matrix<T>::gauss_seidel(Matrix<T>& a, T* b, T* x, float tol)
     */
      
     int iter = 0;
-    double conve = 10;
-
+    double RMS = 10;
+    double* answer_check = new double[this->rows];
     T* pout2 = new T[this->rows];
     
     for (int i = 0; i < this->rows; i++)
@@ -324,7 +324,7 @@ void Matrix<T>::gauss_seidel(Matrix<T>& a, T* b, T* x, float tol)
         x[i] = 0;
     }
 
-    while (conve > tol)
+    while (RMS > tol)
     {
         iter += 1;
         //std::cout << "\niteration: " << iter;
@@ -350,10 +350,13 @@ void Matrix<T>::gauss_seidel(Matrix<T>& a, T* b, T* x, float tol)
                 x[i] = x[i] - ((a.values[i * this->rows + j] / a.values[i * this->rows + i]) * x[j]);
             }
         }
-        conve = RMS_norm_diff(pout2, x);
+        // find error after every itteration
+        a.matVecMult(x, answer_check);
+        RMS = a.RMS_norm_diff(b, answer_check);
         //std::cout << "\nconvergence values: " << conve;
     }
 
+    delete[] answer_check;
     delete[] pout2;
     /*
     // Gauss-seidel implementation with convergence criteria 
@@ -384,7 +387,7 @@ void Matrix<T>::gauss_seidel(Matrix<T>& a, T* b, T* x, float tol)
 
 
 template <class T>
-void Matrix<T>::jacobi_solver_element(T* b, T* output, int maxIter, bool initialised, float tol) {
+void Matrix<T>::jacobi_solver_element(Matrix<T>* A,T* b, T* output, int maxIter, bool initialised, float tol) {
     /*
     Jacobi solver using element-wise calcualtions
     Solves a linear system of equations A*x=b using an ittertive apporach
@@ -406,24 +409,25 @@ void Matrix<T>::jacobi_solver_element(T* b, T* output, int maxIter, bool initial
 
     // create variables 
     double conve = 10;   // store RMS difference between x_{k} and x_{k+1}
-    T* pout2 = new T[this->rows];   // store x_{k+1}
+    T* pout2 = new T[A->rows];   // store x_{k+1}
     float sum = 0;
     int n = 0;
-    double sum_RMS = 0;
+    double RMS = 0;
+    double* answer_check = new double[A->rows];
 
 
     // if not initialised fist input than use random numbers to 
     // initialise x_{k}
     if (initialised == false) {
         // initialise starting condition x_{k} 
-        for (int i = 0; i < this->rows; i++)
+        for (int i = 0; i < A->rows; i++)
         {
             output[i] = rand() % 50 + 5;
         }
     }
 
     // initialise starting condition x_{k} 
-    for (int i = 0; i < this->rows; i++)
+    for (int i = 0; i < A->rows; i++)
     {
         output[i] = rand() % 50 + 5;
     }
@@ -431,50 +435,38 @@ void Matrix<T>::jacobi_solver_element(T* b, T* output, int maxIter, bool initial
     // start iteration, only do maxIter steps 
     for (int n = 0; n < maxIter; n++) {
         // loop over rows
-        for (int i = 0; i < this->rows; i++) {
+        for (int i = 0; i < A->rows; i++) {
             // set variable to zero such that it can be added to 
             sum = 0;
             // loop over cols of matrix
-            for (int j = 0; j < this->cols; j++) {
+            for (int j = 0; j < A->cols; j++) {
                 // if i = j dont do anything because that is row value that is calcualted
                 // for i not equal to j, mutiply both values and add to sum
                 if (i != j) {
-                    sum += this->values[i * this->cols + j] * output[j];
+                    sum += A->values[i * A->cols + j] * output[j];
                 }
 
             }
             // put the sum value in the right spot in the array with some additonal calculations
-            pout2[i] = (1 / (this->values[i * this->rows + i])) * (b[i] - sum);
+            pout2[i] = (1 / (A->values[i * A->rows + i])) * (b[i] - sum);
         }
 
-        // set RMS norm summation varible to zero
-        sum_RMS = 0;
-
-        // In this loop the RMS residual is calculated just like in the RMS_norm_diff func
-        // but this loop is also used to copy the array therefore only one loop is used below
-        // rather than two seperate loops
-        for (int i = 0; i < this->rows; i++) {
-
-
-            // add the squared difference to sum_a for the RMS convergence between the
-            // different itterations
-            sum_RMS += (pout2[i] - output[i]) * (pout2[i] - output[i]);
-
-            // copy values into new array for next itteration
-            output[i] = pout2[i];
-
+      // loop is used to copy the new solution into the other array
+      for (int i = 0; i < A->rows; i++) {
+         // copy values into new array for next itteration
+         output[i] = pout2[i];
         }
-
-        // RMS norm of the squared difference
-        conve = sqrt(sum_RMS / this->rows);
-
-        // if rms norm is smaller than tolerance -> break loop
-        if (conve < tol) {
+      A->matVecMult(output, answer_check);
+      RMS = A->RMS_norm_diff(b, answer_check);
+      // if rms norm is smaller than tolerance -> break lool
+      if (RMS < tol) {
             break;
         }
+
     }
 
     delete[] pout2;
+    delete[] answer_check;
 }
 
 
@@ -507,7 +499,7 @@ void  Matrix<T>::jacobi_decomposition(Matrix<T>* D, Matrix<T>* N) {
 
 
 template <class T>
-void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, bool initialised, float tol) {
+void  Matrix<T>::jacobi_solver_matrix(Matrix<T>* A, double* b, double* xk1, int maxIter, bool initialised, float tol) {
     /*
     Jacobi solver using matrix manipulation
     Solves a linear system of equations A*x=b using an ittertive apporach, where every itteration
@@ -527,26 +519,27 @@ void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, bool 
 
     */
 
-    auto* N = new Matrix<T>(this->rows, this->cols, true);
-    auto* D = new Matrix<T>(this->rows, this->cols, true);
+    auto* N = new Matrix<T>(A->rows, A->cols, true);
+    auto* D = new Matrix<T>(A->rows, A->cols, true);
 
 
 
-    T* xk2 = new T[this->rows];   // store x_{k+1}
-    T* pvecvecarray = new T[this->rows];   // store vecVecsubtract
-    T* pmatvecarray = new T[this->rows];   // store matVecMult
+    T* xk2 = new T[A->rows];   // store x_{k+1}
+    T* pvecvecarray = new T[A->rows];   // store vecVecsubtract
+    T* pmatvecarray = new T[A->rows];   // store matVecMult
 
     // initialize conve varible for first itteration 
-    double conve = 12;
+    double RMS = 12;
+    double* answer_check = new double[A->rows];
 
     // decompose value into a inverse diagonal D, and lower/upper triangular N
-    this->jacobi_decomposition(D, N);
+    A->jacobi_decomposition(D, N);
 
     // if not initialised input, use random numbers to 
     // initialise x_{k}
     if (initialised == false) {
         // initialise starting condition x_{k} 
-        for (int i = 0; i < this->rows; i++)
+        for (int i = 0; i < A->rows; i++)
         {
             xk1[i] = rand() % 50 + 5;
         }
@@ -560,18 +553,18 @@ void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, bool 
         // need to copy old solution before it is overwritten in next step
         // this is needed to find RMS norm of the previous solution to the
         // current one
-        for (int i = 0; i < this->rows; i++)
+        for (int i = 0; i < A->rows; i++)
         {
             xk2[i] = xk1[i];
         }
 
         D->matVecMult(pvecvecarray, xk1); // X_{n+1} = D * R
 
-        // find RMS norm of output-pout2 array 
-        conve = RMS_norm_diff(xk2, xk1);
-
-        // if rms norm is smaller than tolerance -> break loop
-        if (conve < tol) {
+      // find error after every itteration
+      A->matVecMult(xk1, answer_check);
+      RMS = A->RMS_norm_diff(b, answer_check);
+      // if rms norm is smaller than tolerance -> break lool
+      if (RMS < tol) {
             break;
         }
     }
@@ -581,6 +574,7 @@ void  Matrix<T>::jacobi_solver_matrix(double* b, double* xk1, int maxIter, bool 
    //delete[] D->values;
    delete N;
    delete D;
+   delete[] answer_check;
    delete[] pvecvecarray;
    delete[] pmatvecarray;
    delete[] xk2;

@@ -42,7 +42,7 @@ void test_jacobi_solver_matrix()
         
 
         clock_t start = clock();
-        A->jacobi_solver_matrix(b,x,1000,true, tol);
+        A->jacobi_solver_matrix(A,b,x,1000,true, tol);
     
         clock_t end = clock();
 
@@ -91,7 +91,7 @@ void test_jacobi_solver_element()
         
 
         clock_t start = clock();
-        A->jacobi_solver_element(b,x,1000,true, tol);
+        A->jacobi_solver_element(A,b,x,1000,true, tol);
     
         clock_t end = clock();
 
@@ -705,9 +705,9 @@ int main()
     test_gauss_seidel_sparse(); //10x10 100x100 1000x1000
     test_jacobi_sparse(); //10x10 100x100 1000x1000
     test_sparse_conjugate_gradient();
-    test_sparse_CholeskySolve();
+    //test_sparse_CholeskySolve();
 
-    // test_sparse_gauss_seidel(); //known solution
+    //test_sparse_gauss_seidel(); //known solution
     // test_sparse_jacobi(); //known solution
     //test_sparse_matMatMult();
     return 0;
