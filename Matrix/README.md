@@ -153,12 +153,35 @@ Fulfilling the inputs of the solver (refer to the declared solver in header file
         A->gauss_seidel(*A, b, x, tol);
 '''
 ###### Documentation:
-The class Matrix has the following methods
+The class Matrix has three constructors and a destructor:
 
+'''
 Matrix(int rows, int cols, bool preallocate);
 Matrix(int rows, int cols, T *values_ptr);
 Matrix(int rows, int cols, int diag_max, int diag_min);
+
 virtual ~Matrix();
+'''
+
+The first constructor takes two ints for the number of rows and the number of columns and a further bool for the option to preallocate memory.
+The second constructor takes two ints for the number of rows and the number of columns and a pointer to an array of values.
+
+The third constructor is useful for testing: it takes two ints for the number of rows and the number of columns and two further integers diag_max and diag_min.
+It creates a matrix with diagonal values randomised between diag_max and diag_min and all other entries = 1.
+
+Example call:
+'''
+auto *dense_mat = new Matrix<double>(5, 5, 10,-10);
+dense_mat->printMatrix();
+-------------
+Printing matrix
+
+-9 1 1 1 1
+1 -3 1 1 1 
+1 1 -6 1 1
+1 1 1 -10 1
+1 1 1 1 -1
+'''
 
 void printValues();
 virtual void printMatrix();
