@@ -30,24 +30,23 @@ public:
    float RMS_norm_diff(T* vec_a, T* vec_b);
 
    //Gauss-seidel solver
-   void gauss_seidel(Matrix<T>* A, T* b, T* x, float tol);
+   void gauss_seidel(Matrix<T>* A, T* b, T* x, int maxIter, float tol);
 
    // Jacobi solver element-wise
-   void jacobi_solver_element(Matrix<T>* A,T* b, T* output, int maxIter, bool initialised, float tol);
+   void jacobi_solver_element(Matrix<T>* A,T* b, T* x, int maxIter, bool initialised, float tol);
 
    // Functions for Jacobi solver matrix
    void jacobi_decomposition(Matrix<T>* D, Matrix<T>* N);
-   void jacobi_solver_matrix(Matrix<T>* A, double* b, double* output, int maxIter, bool initialised, float tol);
+   void jacobi_solver_matrix(Matrix<T>* A, T* b, T* x, int maxIter, bool initialised, float tol);
 	
    void LUDecomp(Matrix<T>& L, Matrix<T>& U);
    void SLUDecomp(Matrix<T>* LU);
-   void IPLUDecomp();
    
    void fsubstitution(Matrix<T>& L, T* y,T* b);
    void fsubstitutionLU(Matrix<T>& L, T* y,T* b);
    void bsubstitution(Matrix<T>& U, T* x, T* y);
 
-   void LUSolve(Matrix<T>* A, double* b, double* output, bool inplace);
+   void LUSolve(Matrix<T>* A, T* b, T* x, bool inplace);
    void conjugate_gradient(Matrix<T>* A, T* b, T* x, int maxIter, float tol);
   
    void CholeskyDecomp(Matrix<T>* L);

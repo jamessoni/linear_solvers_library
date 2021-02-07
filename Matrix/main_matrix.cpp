@@ -219,6 +219,7 @@ void test_conjugate_gradient()
 
 void test_gauss_seidel()
 {
+
     float tol = 1e-6;
     vector<int> vs = { 10,100,1000 };
     for (int i = 0; i < 3; i++)
@@ -244,7 +245,7 @@ void test_gauss_seidel()
 
         //using gauss-seidel method
         auto start = high_resolution_clock::now();
-        A->gauss_seidel(A, b, x, tol);
+        A->gauss_seidel(A, b, x, 1000, tol);
         auto stop = high_resolution_clock::now();
         auto duration = duration_cast<microseconds>(stop - start);
 
@@ -271,6 +272,7 @@ void test_gauss_seidel()
 //known solution
 void test_gauss_seidel_sparse_known()
 {
+    int max_Iter = 500;
     float tol = 1e-6;
     int rows = 4;
     int cols = 4;
@@ -320,7 +322,7 @@ void test_gauss_seidel_sparse_known()
 
     //using gauss-seidel method
     auto start = high_resolution_clock::now();
-    sparse_mat->gauss_seidel_sparse(sparse_mat, b, x, tol);
+    sparse_mat->gauss_seidel_sparse(sparse_mat, b, x, max_Iter, tol);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
 
@@ -567,6 +569,7 @@ void test_cholesky_known()
 // random CSR matrices of increasing size
 void test_gauss_seidel_sparse()
 {
+    int max_iter = 500;
     float tol = 1.e-6;
     vector<int> vs = { 10,100,1000 };
     //vector<int> vs = { 10,100 };
@@ -605,7 +608,7 @@ void test_gauss_seidel_sparse()
         }
 
         auto start = high_resolution_clock::now();
-        sparse_mat_2->gauss_seidel_sparse(sparse_mat_2, b, x, tol);
+        sparse_mat_2->gauss_seidel_sparse(sparse_mat_2, b, x, max_iter, tol);
         auto stop = high_resolution_clock::now();
         auto duration = duration_cast<microseconds>(stop - start);
 
@@ -899,7 +902,7 @@ void gauss_seidel_example()
     }
     cout << endl;
 
-    A->gauss_seidel(A, b, x, tol);
+    A->gauss_seidel(A, b, x, 1000, tol);
 
     cout << "solution x: ";
     for (int i = 0; i < rows; i++)
@@ -1284,6 +1287,7 @@ void jacobi_sparse_example()
 
 void Gauss_seidel_sparse_example()
 {
+    int max_iter = 500;
     int nnzs = 0;
     int rows = 0;
     int cols = 0;
@@ -1327,7 +1331,7 @@ void Gauss_seidel_sparse_example()
         x[i] = 0.0;
     }
 
-    sparse_mat_2->gauss_seidel_sparse(sparse_mat_2, b, x, tol);
+    sparse_mat_2->gauss_seidel_sparse(sparse_mat_2, b, x, max_iter, tol);
 
     cout << "initialised input x: ";
     for (int i = 0; i < rows; i++)

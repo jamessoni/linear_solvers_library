@@ -20,11 +20,11 @@ public:
 	void matVecMult(T* input, T* output);
 	void dense2sparse(Matrix<T>& tosparsify, CSRMatrix<T>* output);
 
-	void jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* output, int maxIter, bool initialised, float tol);
+	void jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* x, int maxIter, bool initialised, float tol);
 
 	float RMS_norm_diff(T* vec_a, T* vec_b);
 
-	void gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, int maxIter, float tol);
+	void gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x, int maxIter, float tol);
 
 	int getv(int row,int col);
   	CSRMatrix<T>* matMatMult(CSRMatrix<T>& mat_right);

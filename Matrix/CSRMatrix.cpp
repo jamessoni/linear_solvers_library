@@ -143,7 +143,7 @@ void CSRMatrix<T>::dense2sparse(Matrix<T>& tosparsify, CSRMatrix<T>* output)
 
 
 template <class T>
-void CSRMatrix<T>::jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* output, int maxIter, bool initialised, float tol) {
+void CSRMatrix<T>::jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* x, int maxIter, bool initialised, float tol) {
     /*
     Jacobi solver using a CSR sparse matrix
     Solves a linear system of equations A*x=b using an iterative apporach
@@ -182,7 +182,7 @@ void CSRMatrix<T>::jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* output, int ma
             // initialise starting condition x_{k} 
             for (int i = 0; i < A->rows; i++)
             {
-                output[i] = rand() % 500 + 50;
+                x[i] = rand() % 500 + 50;
             }
         }
 
@@ -197,7 +197,7 @@ void CSRMatrix<T>::jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* output, int ma
                     // if i = j dont do anything because that is row value that is calcualted
                     // for i not equal to j, mutiply both values and add to sum
                     if (A->col_index[j] != i) {
-                        sum += A->values[j] * output[A->col_index[j]];
+                        sum += A->values[j] * x[A->col_index[j]];
                     }
                     if (A->col_index[j] == i) {
                         a_ii = A->values[j];
@@ -213,11 +213,11 @@ void CSRMatrix<T>::jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* output, int ma
             for (int i = 0; i < A->rows; i++) {
 
                 // copy values into new array for next itteration
-                output[i] = pout2[i];
+                x[i] = pout2[i];
 
             }
 
-            A->matVecMult(output, answer_check);
+            A->matVecMult(x, answer_check);
             RMS = A->RMS_norm_diff(b, answer_check);
             // if rms norm is smaller than tolerance -> break lool
             if (RMS < tol) {
@@ -251,7 +251,7 @@ float CSRMatrix<T>::RMS_norm_diff(T* vec_a, T* vec_b)
 }
 
 template <class T>
-void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, int maxIter, float tol)
+void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x, int maxIter, float tol)
 {
     /*
     Gauss-seidel solver implementation
@@ -259,7 +259,7 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, int max
         Input :
             <T>array[] * a : CSR Matrix input
             <T>array[] * b : RHS of the linear system
-            <T>array[] * x_init : array in which the solution will be stored in
+            <T>array[] * x : array in which the solution will be stored in
             double tol : tolerance of the solver
 
         Output :
@@ -279,7 +279,6 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, int max
     }
     else {
 
-        int iter_max = 500;
         int iter = 0;
         double conve = 10;
         double A_ii = 0;
@@ -290,7 +289,7 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, int max
         //x_init has initialised 0's as an initial 'guess'
         for (int i = 0; i < this->rows; i++)
         {
-            x_init[i] = 0;
+            x[i] = 0;
         }
 
         int count = 0;
@@ -302,7 +301,7 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, int max
             //enables convergence parameter to be checked against predefined tolerance
             for (int i = 0; i < this->rows; i++)
             {
-                pout2[i] = x_init[i];
+                pout2[i] = x[i];
             }
             //looping over the rows of A
             for (int i = 0; i < this->rows; i++)
@@ -323,7 +322,7 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, int max
                         }
                     }
                 }
-                x_init[i] = b[i] / A_ii;
+                x[i] = b[i] / A_ii;
                 //using compressed sparse row matVecMult 
                 //looping over the columns 
                 for (int val_index = A->row_position[i]; val_index < A->row_position[i + 1]; val_index++)
@@ -333,21 +332,22 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, int max
                         continue;
                     }
                     //computing x[i] = x[i] - ((A[i][j] * x[j]) / A[i][i])
-                    x_init[i] = x_init[i] - (A->values[val_index] * x_init[col_index[val_index]]) / A_ii;
+                    x[i] = x[i] - (A->values[val_index] * x[col_index[val_index]]) / A_ii;
                 }
             }
             // calculating the rms norm difference between the previous
             // and current iterations of x
-            A->matVecMult(x_init, answer_check);
+            A->matVecMult(x, answer_check);
             RMS = A->RMS_norm_diff(b, answer_check);
-            // if rms norm is smaller than tolerance -> break lool
+            // if rms norm is smaller than tolerance -> break loop
             if (RMS < tol) {
                 break;
             }
-            //std::cout << "\nconvergence values: " << conve;
+
         }
 
         delete[] pout2;
+        delete[] answer_check;
     }
   }
 

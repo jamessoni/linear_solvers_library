@@ -263,7 +263,7 @@ float Matrix<T>::RMS_norm_diff(T* vec_a, T* vec_b)
 }
 
 template <class T>
-void Matrix<T>::gauss_seidel(Matrix<T>* A, T* b, T* x, float tol)
+void Matrix<T>::gauss_seidel(Matrix<T>* A, T* b, T* x, int maxIter, float tol)
 {
 
     /*
@@ -290,8 +290,8 @@ void Matrix<T>::gauss_seidel(Matrix<T>* A, T* b, T* x, float tol)
         std::cerr << "Ensure dimensions (rows and columns) of Matrix A match" << std::endl;
     }
     else {
-        int iter = 0;
         double RMS = 10;
+        int count = 0;
         double* answer_check = new double[this->rows];
         T* pout2 = new T[this->rows];
 
@@ -299,10 +299,10 @@ void Matrix<T>::gauss_seidel(Matrix<T>* A, T* b, T* x, float tol)
         {
             x[i] = 0;
         }
-
-        while (RMS > tol)
+        
+        while (count < maxIter)
         {
-            iter += 1;
+            count += 1;
             //std::cout << "\niteration: " << iter;
             //updating pout2 as previous iteration x.values
             //enables convergence paramter to be checked against predefined tolerance
@@ -329,7 +329,10 @@ void Matrix<T>::gauss_seidel(Matrix<T>* A, T* b, T* x, float tol)
             // find error after every itteration
             A->matVecMult(x, answer_check);
             RMS = A->RMS_norm_diff(b, answer_check);
-            //std::cout << "\nconvergence values: " << conve;
+            if (RMS < tol) 
+            {
+                break;
+            }
         }
 
         delete[] answer_check;
@@ -364,7 +367,7 @@ void Matrix<T>::gauss_seidel(Matrix<T>* A, T* b, T* x, float tol)
 
 
 template <class T>
-void Matrix<T>::jacobi_solver_element(Matrix<T>* A,T* b, T* output, int maxIter, bool initialised, float tol) {
+void Matrix<T>::jacobi_solver_element(Matrix<T>* A,T* b, T* x, int maxIter, bool initialised, float tol) {
     /*
     Jacobi solver using element-wise calcualtions
     Solves a linear system of equations A*x=b using an ittertive apporach
@@ -405,14 +408,14 @@ void Matrix<T>::jacobi_solver_element(Matrix<T>* A,T* b, T* output, int maxIter,
             // initialise starting condition x_{k} 
             for (int i = 0; i < A->rows; i++)
             {
-                output[i] = rand() % 50 + 5;
+                x[i] = rand() % 50 + 5;
             }
         }
 
         // initialise starting condition x_{k} 
         for (int i = 0; i < A->rows; i++)
         {
-            output[i] = rand() % 50 + 5;
+            x[i] = rand() % 50 + 5;
         }
 
         // start iteration, only do maxIter steps 
@@ -426,7 +429,7 @@ void Matrix<T>::jacobi_solver_element(Matrix<T>* A,T* b, T* output, int maxIter,
                     // if i = j dont do anything because that is row value that is calcualted
                     // for i not equal to j, mutiply both values and add to sum
                     if (i != j) {
-                        sum += A->values[i * A->cols + j] * output[j];
+                        sum += A->values[i * A->cols + j] * x[j];
                     }
 
                 }
@@ -437,9 +440,9 @@ void Matrix<T>::jacobi_solver_element(Matrix<T>* A,T* b, T* output, int maxIter,
             // loop is used to copy the new solution into the other array
             for (int i = 0; i < A->rows; i++) {
                 // copy values into new array for next itteration
-                output[i] = pout2[i];
+                x[i] = pout2[i];
             }
-            A->matVecMult(output, answer_check);
+            A->matVecMult(x, answer_check);
             RMS = A->RMS_norm_diff(b, answer_check);
             // if rms norm is smaller than tolerance -> break lool
             if (RMS < tol) {
@@ -483,7 +486,7 @@ void  Matrix<T>::jacobi_decomposition(Matrix<T>* D, Matrix<T>* N) {
 
 
 template <class T>
-void  Matrix<T>::jacobi_solver_matrix(Matrix<T>* A, double* b, double* xk1, int maxIter, bool initialised, float tol) {
+void  Matrix<T>::jacobi_solver_matrix(Matrix<T>* A, T* b, T* x, int maxIter, bool initialised, float tol) {
     /*
     Jacobi solver using matrix manipulation
     Solves a linear system of equations A*x=b using an ittertive apporach, where every itteration
@@ -531,13 +534,13 @@ void  Matrix<T>::jacobi_solver_matrix(Matrix<T>* A, double* b, double* xk1, int 
             // initialise starting condition x_{k} 
             for (int i = 0; i < A->rows; i++)
             {
-                xk1[i] = rand() % 50 + 5;
+                x[i] = rand() % 50 + 5;
             }
         }
 
         // x_{k+1} = D(b - N * x_k)
         for (int n = 0; n < maxIter; n++) {
-            N->matVecMult(xk1, pmatvecarray); // K = N * x_n
+            N->matVecMult(x, pmatvecarray); // K = N * x_n
             N->vecVecsubtract(b, pmatvecarray, pvecvecarray); // R = b - K
 
             // need to copy old solution before it is overwritten in next step
@@ -545,13 +548,13 @@ void  Matrix<T>::jacobi_solver_matrix(Matrix<T>* A, double* b, double* xk1, int 
             // current one
             for (int i = 0; i < A->rows; i++)
             {
-                xk2[i] = xk1[i];
+                xk2[i] = x[i];
             }
 
-            D->matVecMult(pvecvecarray, xk1); // X_{n+1} = D * R
+            D->matVecMult(pvecvecarray, x); // X_{n+1} = D * R
 
           // find error after every itteration
-            A->matVecMult(xk1, answer_check);
+            A->matVecMult(x, answer_check);
             RMS = A->RMS_norm_diff(b, answer_check);
             // if rms norm is smaller than tolerance -> break lool
             if (RMS < tol) {
@@ -749,7 +752,7 @@ void Matrix<T>::bsubstitution(Matrix<T>& U, T* x, T* y)
 }
 
 template <class T>
-void Matrix<T>::LUSolve(Matrix<T>* A, double* b, double* output, bool inplace)
+void Matrix<T>::LUSolve(Matrix<T>* A, T* b, T* x, bool inplace)
 {
     // Check our dimensions match
     if (this->cols != this->rows)
@@ -773,7 +776,7 @@ void Matrix<T>::LUSolve(Matrix<T>* A, double* b, double* output, bool inplace)
 
         for (int i = 0; i < LU->cols; i++)
         {
-            output[i] = 0;
+            x[i] = 0;
         }
 
         //creating y vector for our intermediate step.
@@ -789,7 +792,7 @@ void Matrix<T>::LUSolve(Matrix<T>* A, double* b, double* output, bool inplace)
         fsubstitutionLU(*LU, y, b);
 
         //backward substitution
-        bsubstitution(*LU, output, y);
+        bsubstitution(*LU, x, y);
 
         if (inplace) //delete LU if new space was allocated
         {
