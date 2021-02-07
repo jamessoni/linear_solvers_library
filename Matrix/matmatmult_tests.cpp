@@ -32,7 +32,7 @@ void readMatrixFromFile(string name, Matrix<double> *toread)
     myfile.close();
 }
 
-vector<int> vs = {10,100,200,500,750,1000};
+vector<int> vs = {10};
 
 void test_matMatMult()
 {   
@@ -45,6 +45,16 @@ void test_matMatMult()
         auto *dense_mat2 = new Matrix<double>(rows, cols, true);
         auto *dense_mat3 = new Matrix<double>(rows, cols, true);
         auto *dense_mat4 = new Matrix<double>(rows, cols, true);
+
+        auto *SPDM = new Matrix<double>(3, 3, 10,5);
+        SPDM->printMatrix();
+        bool spd = SPDM->SPDMatrixcheck();
+        std::cout << "\n"<< spd<< "\n";
+        SPDM->values[4] = 0;
+        SPDM->printMatrix();
+        spd = SPDM->SPDMatrixcheck();
+        std::cout << "\n" << spd<< "\n";
+
         readMatrixFromFile("MMM"+ to_string(rows) +"-1.txt",dense_mat1);
         readMatrixFromFile("MMM"+ to_string(rows) +"-2.txt",dense_mat2);
         readMatrixFromFile("MMM"+ to_string(rows) +"-3.txt",dense_mat3);
@@ -75,5 +85,6 @@ int main()
 {
     std::cout << "Testing components:" << "\n\n";
     test_matMatMult();
+    
     return 0;
 }

@@ -151,9 +151,13 @@ bool Matrix<T>::SPDMatrixcheck()
         is less than the smallest diagonal entry)
     */
 
+ 
+
     int sum_nondiag{};
     int diag_val{};
     bool SPD{ false };
+
+ 
 
     //criteria 1. testing for symmetry in matrix
     for (int i = 0; i < rows; i++) {
@@ -186,10 +190,10 @@ bool Matrix<T>::SPDMatrixcheck()
             else {
                 sum_nondiag += this->values[i * rows + j];
             }
+            if (diag_val <= sum_nondiag) {
+                SPD = false;
+            }
         }
-    }
-    if (diag_val <= sum_nondiag) {
-        SPD = false;
     }
     if (SPD == true) {
         std::cout << "\nPasses weak SPD check";
@@ -553,159 +557,175 @@ void  Matrix<T>::jacobi_solver_matrix(Matrix<T>* A, double* b, double* xk1, int 
 template <class T>
 void Matrix<T>::LUDecomp(Matrix<T>& L, Matrix<T>& U)
 {
+    //NOTE: UNSTABLE BECAUSE THERE IS NO PARTIAL PIVOTING
 
-   // Check our dimensions match
-   if (this->cols != L.cols || this->cols != U.cols || this->rows != L.rows || this->rows != U.rows )
-   {
-      std::cerr << "L and U must be of the same size as the matrix you want to decompose" << std::endl;
-      return;
-   }
+    // Check our dimensions match
+    if (this->cols != L.cols || this->cols != U.cols || this->rows != L.rows || this->rows != U.rows )
+    {
+        std::cerr << "L and U must be square and of the same size as the matrix you want to decompose" << std::endl;
+        return;
+    }
 
-   // Check if our L matrix has had space allocated to it
-   if (L.values != nullptr) 
-   {
-      L.values = new T[this->rows * this->cols];
-      // Don't forget to set preallocate to true now it is protected
-      L.preallocated = true;
-   }
+    // Check if our L matrix has had space allocated to it
+    if (L.values != nullptr) 
+    {
+        L.values = new T[this->rows * this->cols];
+        // Don't forget to set preallocate to true now it is protected
+        L.preallocated = true;
+    }
 
     // Check if our U matrix has had space allocated to it
-   if (U.values != nullptr) 
-   {
-      U.values = new T[this->rows * this->cols];
-      // Don't forget to set preallocate to true now it is protected
-      U.preallocated = true;
-   }
+    if (U.values != nullptr) 
+    {
+        U.values = new T[this->rows * this->cols];
+        // Don't forget to set preallocate to true now it is protected
+        U.preallocated = true;
+    }
 
-   // Setting L = I as a starting point
-   for (int i = 0; i < this->cols; i++)
-   {
-      for (int j = 0; j < this->rows; j++) {
-         if (i == j) {
-            L.values[j*this->rows + i] = 1;
-         } else {
-            L.values[j*this->rows + i] = 0;
-         }
-      }
-   }
+    // Setting L = I as a starting point
+    for (int i = 0; i < this->cols; i++)
+    {
+        for (int j = 0; j < this->rows; j++)
+        {
+            if (i == j)
+            {
+                L.values[j*this->rows + i] = 1;
+            } else {
+                L.values[j*this->rows + i] = 0;
+            }
+        }
+    }
 
-   // U = A as a starting point
-   for (int i=0;i<this->size_of_values; i++)
-   {
-      U.values[i] = this->values[i];
-   }
+    // U = A as a starting point
+    for (int i=0;i<this->size_of_values; i++)
+    {
+        U.values[i] = this->values[i];
+    }
 
-   for (int step = 0; step<U.rows; step++)
-   {
-      double factor = 0; //factor by which to multiply the pivot row before adding it
-      for(int i = step+1; i < U.rows; i++)
-      {
-         factor = U.values[(i)*U.cols+step]/U.values[step*U.cols+step];
-         daxpy(U.cols-step,-factor,&U.values[step*U.cols+step],1,&U.values[i*U.cols+step],1);
-         L.values[i*cols+step] = factor;
-      }
-   }
+    //looping through every row
+    for (int step = 0; step<U.rows; step++)
+    {
+        //factor by which to multiply the pivot row before adding it
+        double factor = 0; 
+
+        //Gaussian elimination, row by row (rows below the current pivot).
+        for(int i = step+1; i < U.rows; i++)
+        {
+            //factor = value in pivot column of row being considered/diagonal value
+            factor = U.values[(i)*U.cols+step]/U.values[step*U.cols+step];
+
+            //daxpying  -factor*(pivot row) + (current row)
+            daxpy(U.cols-step,-factor,&U.values[step*U.cols+step],1,&U.values[i*U.cols+step],1);
+
+            //adding our factor to the L matrix
+            L.values[i*cols+step] = factor;
+        }
+    }
 }
 
 template <class T>
 void Matrix<T>::SLUDecomp(Matrix<T>* LU)
 {
-   //Decompose to a single matrix
+    //NOTE: UNSTABLE BECAUSE THERE IS NO PARTIAL PIVOTING
 
-   // Check our dimensions match
-   if (this->cols != LU->cols || this->cols != LU->cols)
-   {
-      std::cerr << "L and U must be of the same size as the matrix you want to decompose" << std::endl;
-      return;
-   }
+    // Check our dimensions match
+    if (this->cols != LU->cols || this->rows != LU->rows)
+    {
+        std::cerr << "LU must be square and of the same size as the matrix you want to decompose" << std::endl;
+        return;
+    }
 
-   // Check if our LU matrix has had space allocated to it
-   if (LU->values != nullptr) 
-   {
-      LU->values = new T[this->rows * this->cols];
-      // Don't forget to set preallocate to true now it is protected
-      LU->preallocated = true;
-   }
+    // Check if our LU matrix has had space allocated to it
+    if (LU->values != nullptr) 
+    {
+        LU->values = new T[this->rows * this->cols];
+        // Don't forget to set preallocate to true now it is protected
+        LU->preallocated = true;
+    }
 
-   // LU = A as a starting point
-   for (int i=0;i<this->size_of_values; i++)
-   {
-      LU->values[i] = this->values[i];
-   }
-   for (int step = 0; step<LU->rows; step++)
-   {
-      double factor = 0;
-      for(int i = step+1; i < LU->rows; i++)
-      {
-         factor = LU->values[(i)*LU->cols+step]/LU->values[step*LU->cols+step];
-         daxpy(LU->cols-step,-factor,&LU->values[step*LU->cols+step],1,&LU->values[i*LU->cols+step],1);
-         LU->values[i*cols+step] = factor;
-      }
-   }
-}
+    // LU = A as a starting point
+    for (int i=0;i<this->size_of_values; i++)
+    {
+        LU->values[i] = this->values[i];
+    }
 
-template <class T>
-void Matrix<T>::IPLUDecomp()
-{
-   //In place decomposition
+    //looping through every row
+    for (int step = 0; step<LU->rows; step++)
+    {
+        //factor by which to multiply the pivot row before adding it
+        double factor = 0; 
 
-   // Check if our LU matrix has had space allocated to it
-   if (this->values == nullptr) 
-   {
-      std::cout << "ERROR. CANNOT DECOMPOSE NON-EXISTING MATRIX";
-   }
+        //Gaussian elimination, row by row (rows below the current pivot).
+        for(int i = step+1; i < LU->rows; i++)
+        {
+            //factor = value in pivot column of row being considered/diagonal value
+            factor = LU->values[(i)*LU->cols+step]/LU->values[step*LU->cols+step];
 
-   for (int step = 0; step<this->rows; step++)
-   {
-      double factor = 0;
-      for(int i = step+1; i < this->rows; i++)
-      {
-         factor = this->values[(i)*this->cols+step]/this->values[step*this->cols+step];
-         daxpy(this->cols-step,-factor,&this->values[step*this->cols+step],1,&this->values[i*this->cols+step],1);
-         this->values[i*cols+step] = factor;
-      }
-   }
+            //daxpying  -factor*(pivot row) + (current row)
+            daxpy(LU->cols-step,-factor,&LU->values[step*LU->cols+step],1,&LU->values[i*LU->cols+step],1);
+
+            //adding our factor to the LU matrix
+            LU->values[i*cols+step] = factor;
+        }
+    }
 }
 
 template <class T>
 void Matrix<T>::fsubstitutionLU(Matrix<T>& L, T* y, T* b)
 {  
+    //Looping through every row
     for (int i = 0; i<L.cols;i++)
-   {
-      double sum =0;
-      for (int j = 0; j<L.cols; j++)
-      {
-         sum+= L.values[i*L.cols + j]*y[j];
-      }
-      y[i]=(b[i]-sum)/1;
-   }
+    {
+        //Keep track of the total product of the row with the construction-in-progress y
+        double sum = 0;
+
+        //Loop through elements in the row
+        for (int j = 0; j<L.cols; j++)
+        {
+            sum+= L.values[i*L.cols + j]*y[j];
+        }
+
+        //Update y, divide by 1 instead of the diagonal element because it's (theoretically) LU even though it's stored in a single matrix
+        y[i]=(b[i]-sum)/1;
+    }
 }
 
 template <class T>
 void Matrix<T>::fsubstitution(Matrix<T>& L, T* y, T* b)
 {  
+    //Looping through every row
     for (int i = 0; i<L.cols;i++)
-   {
-      double sum =0;
-      for (int j = 0; j<L.cols; j++)
-      {
-         sum+= L.values[i*L.cols + j]*y[j];
-      }
-      y[i]=(b[i]-sum)/L.values[i*L.cols+i];
-   }
+    {
+        //Keep track of the total product of the row with the construction-in-progress y
+        double sum = 0;
+
+        //Loop through elements in the row
+        for (int j = 0; j<L.cols; j++)
+        {
+            sum+= L.values[i*L.cols + j]*y[j];
+        }
+
+        //Update y, divide by the diagonal element
+        y[i]=(b[i]-sum)/L.values[i*(L.cols+1)];
+    }
 }
 
 template <class T>
 void Matrix<T>::bsubstitution(Matrix<T>& U, T* x, T* y)
 {
+    //Looping through every row, backwards
    for (int i = U.cols-1; i>=0;i--)
    {
+       //Keep track of the total product of the row with the construction-in-progress y
       double sum = 0;
+
+      //Loop through elements in the row
       for (int j = 0; j<U.cols; j++)
       {
          sum+= U.values[i*U.cols + j]*x[j];
       }
-
+    
+    //Update x, divide by the diagonal element
       x[i]=(y[i]-sum)/U.values[i*(U.cols+1)];
    }
 }
@@ -713,13 +733,11 @@ void Matrix<T>::bsubstitution(Matrix<T>& U, T* x, T* y)
 template <class T>
 void Matrix<T>::LUSolve(Matrix<T>* A, double* b, double* output, bool inplace)
 {
-   //pivoting
-
    Matrix<T> *LU;
 
    if (inplace) //inplace decomp
    {
-      this->IPLUDecomp();
+      this->SLUDecomp(this);
       LU = this;
    }
    else //not inplace decomp
@@ -843,44 +861,44 @@ void Matrix<T>::conjugate_gradient(Matrix<T>* A, T* b, T* x, int maxIter, float 
 template<class T>
 void Matrix<T>::CholeskyDecomp(Matrix<T>* L)
 {  
-   //REMEMBER TO ADD A CHECK FOR SAME NUMBER OF COLS AND ROWS
-	// Check if our L matrix has had space allocated to it
-   if (L->values != nullptr) 
-   {
-      L->values = new T[this->rows * this->cols];
-      // Don't forget to set preallocate to true now it is protected
-      L->preallocated = true;
-   }
+    //REMEMBER TO ADD A CHECK FOR SAME NUMBER OF COLS AND ROWS
+    // Check if our L matrix has had space allocated to it
+    if (L->values != nullptr) 
+    {
+        L->values = new T[this->rows * this->cols];
+        // Don't forget to set preallocate to true now it is protected
+        L->preallocated = true;
+    }
 
-   //Decomp
-   for (int i = 0; i < this->rows; i++)
-   {  
-      //all the non diagonal elements first
-      for (int j = 0; j < i; j++)
-      {
-         double sigma = 0;
-         // non-diagonals L(i, j) 
-         for (int p = 0; p < j; p++)
-         {
-            sigma += L->values[i*this->cols + p] * L->values[j*this->cols + p]; 
-         }
-         L->values[i*this->cols + j] = ((this->values[i*this->cols + j] - sigma) / L->values[j*this->cols + j]);
-      }
+    //Decomp
+    for (int i = 0; i < this->rows; i++)
+    {  
+        //all the non diagonal elements first
+        for (int j = 0; j < i; j++)
+        {
+            double sigma = 0;
+            // non-diagonals L(i, j) 
+            for (int p = 0; p < j; p++)
+            {
+                sigma += L->values[i*this->cols + p] * L->values[j*this->cols + p]; 
+            }
+            L->values[i*this->cols + j] = ((this->values[i*this->cols + j] - sigma) / L->values[j*this->cols + j]);
+        }
 
-      //Then the diagonal element
-      double sigma = 0;
-      for (int p = 0; p < i; p++) 
-      {
-         sigma += L->values[i*this->cols + p] * L->values[i*this->cols + p];
-      }
-      
-      L->values[i*this->cols + i] = sqrt(this->values[i*this->cols + i] - sigma);
+        //Then the diagonal element
+        double sigma = 0;
+        for (int p = 0; p < i; p++) 
+        {
+            sigma += L->values[i*this->cols + p] * L->values[i*this->cols + p];
+        }
 
-      for (int j = i+1; j < this->cols; j++)
-      {
-         L->values[i*this->cols + j] = 0;
-      }
-   }
+        L->values[i*this->cols + i] = sqrt(this->values[i*this->cols + i] - sigma);
+
+        for (int j = i+1; j < this->cols; j++)
+        {
+            L->values[i*this->cols + j] = 0;
+        }
+    }
 }
 
 template<class T>

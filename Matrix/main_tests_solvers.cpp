@@ -672,18 +672,18 @@ int main()
 {
     cout << "Testing:" << "\n\n";
     cout << "\nSPD Dense solver testing: \n";
-    test_jacobi_solver_matrix();
+    //test_jacobi_solver_matrix();
     //test_jacobi_solver_element();
-    //test_LUSolve();
-    test_conjugate_gradient();
-    test_gauss_seidel();
+    test_LUSolve();
+    //test_conjugate_gradient();
+    //test_gauss_seidel();
     //test_choleskyDecomp();
 
     //sparse solver tests
     cout << "\nSparse solver testing:\n";
-    test_gauss_seidel_sparse(); //10x10 100x100 1000x1000
-    test_jacobi_sparse(); //10x10 100x100 1000x1000
-    test_sparse_conjugate_gradient();
+    //test_gauss_seidel_sparse(); //10x10 100x100 1000x1000
+    //test_jacobi_sparse(); //10x10 100x100 1000x1000
+    //test_sparse_conjugate_gradient();
     //test_sparse_CholeskySolve();
 
     // test_sparse_gauss_seidel(); //known solution
