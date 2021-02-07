@@ -333,29 +333,29 @@ void matVecMult(T* input, T* output);
 Example:
     
     auto *sparse_mat = new CSRMatrix<double>(rows, cols, nnzs, true);
-   // filling with i on diagonals
-   for (int i = 0; i < nnzs; i++)
-   {
-      sparse_mat->values[i] = i;
-      sparse_mat->col_index[i] = i;
-      sparse_mat->row_position[i] = i;
-   }
-   // Now let's print it
-   sparse_mat->printMatrix();
-   // Now let's test our matvec
-   double *input = new double[cols];
-   double *output = new double[rows];
-   for (int i = 0; i < cols; i++)
-   {
-      input[i] = i;
-   }
-   // computing matrix-vector product
-   sparse_mat->matVecMult(input, output);
-   // printing
-   for (int i = 0; i < rows; i++)
-   {
-      cout << " " << output[i];
-   }
+    // filling with i on diagonals
+    for (int i = 0; i < nnzs; i++)
+    {
+    sparse_mat->values[i] = i;
+    sparse_mat->col_index[i] = i;
+    sparse_mat->row_position[i] = i;
+    }
+    // Now let's print it
+    sparse_mat->printMatrix();
+    // Now let's test our matvec
+    double *input = new double[cols];
+    double *output = new double[rows];
+    for (int i = 0; i < cols; i++)
+    {
+        input[i] = i;
+    }
+    // computing matrix-vector product
+    sparse_mat->matVecMult(input, output);
+    // printing
+    for (int i = 0; i < rows; i++)
+    {
+        cout << " " << output[i];
+    }
     -------------
     Printing matrix
     Values: 0 1 2 3
