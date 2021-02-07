@@ -159,69 +159,75 @@ void CSRMatrix<T>::jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* output, int ma
     A needs to be a SPD matrix wiht no zeros on main diagonal
     and the linear system needs to have a solution.
     */
-
-    // create variables 
-    double conve = 10;   // store RMS difference between x_{k} and x_{k+1}
-    T* pout2 = new T[A->rows];   // store x_{k+1}
-    float sum = 0;
-    double a_ii = 0;
-    double sum_RMS = 0;
-    double RMS = 12;
-    double* answer_check = new double[A->rows];
-    //set solution tolerance to e-10
-
-
-    // if not initialised fist input than use random numbers to 
-    // initialise x_{k}
-    if (initialised == false) {
-        // initialise starting condition x_{k} 
-        for (int i = 0; i < A->rows; i++)
-        {
-            output[i] = rand() % 500 + 50;
-        }
+    // Check our dimensions match
+    if (this->cols != this->rows)
+    {
+        std::cerr << "Ensure dimensions (rows and columns) of Matrix A match" << std::endl;
     }
+    else {
+        // create variables 
+        double conve = 10;   // store RMS difference between x_{k} and x_{k+1}
+        T* pout2 = new T[A->rows];   // store x_{k+1}
+        float sum = 0;
+        double a_ii = 0;
+        double sum_RMS = 0;
+        double RMS = 12;
+        double* answer_check = new double[A->rows];
+        //set solution tolerance to e-10
 
-    // start iteration, only do maxIter steps 
-    for (int n = 0; n < maxIter; n++) {
-        // loop over rows
-        for (int i = 0; i < A->rows; i++) {
-            // set variable to zero such that it can be added to 
-            sum = 0;
-            // loop over non zero values in row
-            for (int j = A->row_position[i]; j < A->row_position[i + 1]; j++) {
-                // if i = j dont do anything because that is row value that is calcualted
-                // for i not equal to j, mutiply both values and add to sum
-                if (A->col_index[j] != i) {
-                    sum += A->values[j] * output[A->col_index[j]];
-                }
-                if (A->col_index[j] == i) {
-                    a_ii = A->values[j];
-                }
-                // increase j index 
+
+        // if not initialised fist input than use random numbers to 
+        // initialise x_{k}
+        if (initialised == false) {
+            // initialise starting condition x_{k} 
+            for (int i = 0; i < A->rows; i++)
+            {
+                output[i] = rand() % 500 + 50;
             }
-            // put the sum value in the right spot in the array with some additonal calculations
-            pout2[i] = (1 / (a_ii)) * (b[i] - sum);
-        }
-        // set RMS norm summation varible to zero
-        sum_RMS = 0;
-        // loop over all values in arraz
-        for (int i = 0; i < A->rows; i++) {
-
-            // copy values into new array for next itteration
-            output[i] = pout2[i];
-
         }
 
-        A->matVecMult(output, answer_check);
-        RMS = A->RMS_norm_diff(b, answer_check);
-        // if rms norm is smaller than tolerance -> break lool
-        if (RMS < tol) {
-            break;
-        }
+        // start iteration, only do maxIter steps 
+        for (int n = 0; n < maxIter; n++) {
+            // loop over rows
+            for (int i = 0; i < A->rows; i++) {
+                // set variable to zero such that it can be added to 
+                sum = 0;
+                // loop over non zero values in row
+                for (int j = A->row_position[i]; j < A->row_position[i + 1]; j++) {
+                    // if i = j dont do anything because that is row value that is calcualted
+                    // for i not equal to j, mutiply both values and add to sum
+                    if (A->col_index[j] != i) {
+                        sum += A->values[j] * output[A->col_index[j]];
+                    }
+                    if (A->col_index[j] == i) {
+                        a_ii = A->values[j];
+                    }
+                    // increase j index 
+                }
+                // put the sum value in the right spot in the array with some additonal calculations
+                pout2[i] = (1 / (a_ii)) * (b[i] - sum);
+            }
+            // set RMS norm summation varible to zero
+            sum_RMS = 0;
+            // loop over all values in arraz
+            for (int i = 0; i < A->rows; i++) {
 
+                // copy values into new array for next itteration
+                output[i] = pout2[i];
+
+            }
+
+            A->matVecMult(output, answer_check);
+            RMS = A->RMS_norm_diff(b, answer_check);
+            // if rms norm is smaller than tolerance -> break lool
+            if (RMS < tol) {
+                break;
+            }
+
+        }
+        delete[] pout2;
+        delete[] answer_check;
     }
-    delete[] pout2;
-    delete[] answer_check;
 }
 
 template <class T>
@@ -266,69 +272,76 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, float t
 
     */
 
-    int iter_max = 500;
-    int iter = 0;
-    double conve = 10;
-    double A_ii = 0;
-
-    T* pout2 = new T[this->rows];
-
-    //x_init has initialised 0's as an initial 'guess'
-    for (int i = 0; i < this->rows; i++)
+    // Check our dimensions match
+    if (this->cols != this->rows)
     {
-        x_init[i] = 0;
+        std::cerr << "Ensure dimensions (rows and columns) of Matrix A match" << std::endl;
     }
+    else {
 
-    while (conve > tol)
-        //while (iter < iter_max)
-    {
-        iter += 1;
-        //updating pout2 as previous iteration x.values
-        //enables convergence parameter to be checked against predefined tolerance
+        int iter_max = 500;
+        int iter = 0;
+        double conve = 10;
+        double A_ii = 0;
+
+        T* pout2 = new T[this->rows];
+
+        //x_init has initialised 0's as an initial 'guess'
         for (int i = 0; i < this->rows; i++)
         {
-            pout2[i] = x_init[i];
+            x_init[i] = 0;
         }
-        //looping over the rows of A
-        for (int i = 0; i < this->rows; i++)
-        {
 
-            //A_ii = 0;
-            //looping through storing the diagonal entry in A_ii
-            for (int val_index = A->row_position[i]; val_index < A->row_position[i + 1]; val_index++)
+        while (conve > tol)
+            //while (iter < iter_max)
+        {
+            iter += 1;
+            //updating pout2 as previous iteration x.values
+            //enables convergence parameter to be checked against predefined tolerance
+            for (int i = 0; i < this->rows; i++)
+            {
+                pout2[i] = x_init[i];
+            }
+            //looping over the rows of A
+            for (int i = 0; i < this->rows; i++)
             {
 
-                if (A->col_index[val_index] == i)
+                //A_ii = 0;
+                //looping through storing the diagonal entry in A_ii
+                for (int val_index = A->row_position[i]; val_index < A->row_position[i + 1]; val_index++)
                 {
-                    A_ii = A->values[val_index];
-                    //once A_ii its value stored - break to prevent overwriting
-                    if (A_ii != 0)
+
+                    if (A->col_index[val_index] == i)
                     {
-                        break;
+                        A_ii = A->values[val_index];
+                        //once A_ii its value stored - break to prevent overwriting
+                        if (A_ii != 0)
+                        {
+                            break;
+                        }
                     }
                 }
-            }
-            x_init[i] = b[i] / A_ii;
-            //using compressed sparse row matVecMult 
-            //looping over the columns 
-            for (int val_index = A->row_position[i]; val_index < A->row_position[i + 1]; val_index++)
-            {
-                if (A->col_index[val_index] == i)
+                x_init[i] = b[i] / A_ii;
+                //using compressed sparse row matVecMult 
+                //looping over the columns 
+                for (int val_index = A->row_position[i]; val_index < A->row_position[i + 1]; val_index++)
                 {
-                    continue;
+                    if (A->col_index[val_index] == i)
+                    {
+                        continue;
+                    }
+                    //computing x[i] = x[i] - ((A[i][j] * x[j]) / A[i][i])
+                    x_init[i] = x_init[i] - (A->values[val_index] * x_init[col_index[val_index]]) / A_ii;
                 }
-                //computing x[i] = x[i] - ((A[i][j] * x[j]) / A[i][i])
-                x_init[i] = x_init[i] - (A->values[val_index] * x_init[col_index[val_index]]) / A_ii;
             }
+            // calculating the rms norm difference between the previous
+            // and current iterations of x
+            conve = RMS_norm_diff(pout2, x_init);
+            //std::cout << "\nconvergence values: " << conve;
         }
-        // calculating the rms norm difference between the previous
-        // and current iterations of x
-        conve = RMS_norm_diff(pout2, x_init);
-        //std::cout << "\nconvergence values: " << conve;
-    }
 
-    delete[] pout2;
-    
+        delete[] pout2;
+    }
   }
 
 template <class T>
@@ -653,26 +666,33 @@ void CSRMatrix<T>::bsubstitution(T* y, T* x)
 template <class T>
 void CSRMatrix<T>::CholeskySolve(Matrix<T>* A, T* b, T* x)
 {   
-    //Chelosky decomposing our Matrix A
-    CSRMatrix<T>* Chol = this->CholeskyDecomp();
-    
-    //initialising y and filling it with 0s
-    auto* y = new T[this->rows];
-
-    for (int i=0;i<this->rows;i++)
+    // Check our dimensions match
+    if (this->cols != this->rows)
     {
-        y[i] = 0;
+        std::cerr << "Ensure dimensions (rows and columns) of Matrix A match" << std::endl;
     }
-    
-    //FORWARD SUBSTITUTION
-    Chol->fsubstitution(b,y);
-    
+    else {
+        //Chelosky decomposing our Matrix A
+        CSRMatrix<T>* Chol = this->CholeskyDecomp();
 
-    //Transpose the Cholesky Matrix
-    Chol->transposeiflower();
+        //initialising y and filling it with 0s
+        auto* y = new T[this->rows];
 
-    //BACKWARD SUBSTITUTION
-    Chol->bsubstitution(y,x);
+        for (int i = 0; i < this->rows; i++)
+        {
+            y[i] = 0;
+        }
 
-    //No need to redeclare diag or sigma
+        //FORWARD SUBSTITUTION
+        Chol->fsubstitution(b, y);
+
+
+        //Transpose the Cholesky Matrix
+        Chol->transposeiflower();
+
+        //BACKWARD SUBSTITUTION
+        Chol->bsubstitution(y, x);
+
+        //No need to redeclare diag or sigma
+    }
 }
