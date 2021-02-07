@@ -16,7 +16,7 @@
 using namespace std;
 
 float tol = 1.e-2;
-vector<int> vs = {10,100,200,300,500,1000,2000,3000,5000};
+vector<int> vs = {10,100};
 
 
 void test_jacobi_solver_matrix()
@@ -225,7 +225,7 @@ void test_gauss_seidel()
 
         //using gauss-seidel method
         clock_t start = clock();
-        A->gauss_seidel(A, b, x, tol);
+        A->gauss_seidel(A, b, x, 1000, tol);
         clock_t end = clock();
 
 
@@ -304,8 +304,7 @@ void test_sparse_gauss_seidel()
 
     sparse_mat->matVecMult(x, answer_check);
     double RMS = sparse_mat->RMS_norm_diff(b, answer_check);
-     
-    cout << RMS;
+
     if (RMS > tol) {
         cout << "Sparse Gauss Seidel with known input/output method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
     }
@@ -445,7 +444,6 @@ void test_gauss_seidel_sparse()
         //if this is close to zero, the function works 
         double RMS = A->RMS_norm_diff(b, answer_check);
          
-        cout << RMS;
         // if RMS is larger than e-6, function is not working
         if (RMS > tol) {
             cout << "Sparse Gauss-seidel method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
@@ -674,18 +672,18 @@ int main()
 {
     cout << "Testing:" << "\n\n";
     cout << "\nSPD Dense solver testing: \n";
-    //test_jacobi_solver_matrix();
-    //test_jacobi_solver_element();
-    //test_LUSolve();
-    //test_conjugate_gradient();
-    //test_gauss_seidel();
-    //test_choleskyDecomp();
+    test_jacobi_solver_matrix();
+    test_jacobi_solver_element();
+    test_LUSolve();
+    test_conjugate_gradient();
+    test_gauss_seidel();
+    test_choleskyDecomp();
 
     //sparse solver tests
     cout << "\nSparse solver testing:\n";
     test_gauss_seidel_sparse(); //10x10 100x100 1000x1000
-    //test_jacobi_sparse(); //10x10 100x100 1000x1000
-    //test_sparse_conjugate_gradient();
+    test_jacobi_sparse(); //10x10 100x100 1000x1000
+    test_sparse_conjugate_gradient();
     test_sparse_CholeskySolve();
 
     // test_sparse_gauss_seidel(); //known solution

@@ -26,7 +26,6 @@ public:
 
 	void gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x, int maxIter, float tol);
 
-	int getv(int row,int col);
   	CSRMatrix<T>* matMatMult(CSRMatrix<T>& mat_right);
 	
 	void transposeiflower();

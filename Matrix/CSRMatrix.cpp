@@ -351,23 +351,6 @@ void CSRMatrix<T>::gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x, int maxIter,
     }
   }
 
-template <class T>
-int CSRMatrix<T>::getv(int row,int col)
-{
-    //check all nnzvs in the row
-    for (int v = this->row_position[row]; v < this->row_position[row + 1]; v++)
-    {
-        // If any of them has the col index we are looking for
-        if (this->col_index[v] == col) 
-        {
-            //return the value index
-            return v;
-        }
-    }
-    // if we haven't found a value index, we can return -1 to tell us we haven't got a value
-    return -1;
-}
-
  //Do matrix matrix multiplication
  //output = this * mat_right
 template <class T>
@@ -407,9 +390,18 @@ CSRMatrix<T>* CSRMatrix<T>::matMatMult(CSRMatrix<T>& mat_right)
                //looping through all values in the left matrix's row
                 for (int v = this->row_position[i]; v < this->row_position[i + 1]; v++)
                 {
+                    int index = -1;
 					// for each nnz found check if we have an nnz in the right place in the right matrix too
-                    v2 = mat_right.getv(this->col_index[v],  j);
-
+                    //check all nnzvs in the row
+                    for (int v = this->row_position[this->col_index[v]]; v < this->row_position[this->col_index[v] + 1]; v++)
+                    {
+                        // If any of them has the col index we are looking for
+                        if (this->col_index[v] == j) 
+                        {
+                            //return the value index
+                            index = v;
+                        }
+                    }
                     //if we find it
                     if (v2 > 0)
                     {
