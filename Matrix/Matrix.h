@@ -63,9 +63,9 @@ public:
    void vecVecadd(T* vec_a, T* vec_b);
 
    // functions for onestep_multigrid
-	void prolongation(Matrix<T>* a, Matrix<T>* out);
-	void restrictions(Matrix<T>* I);
-	void onestep_multigrid(Matrix<T>* a, double* b, double* output, int maxIter, bool initialised);
+   void prolongation(Matrix<T>* a, Matrix<T>* out);
+   void restrictions(Matrix<T>* I);
+   void onestep_multigrid(Matrix<T>* a, double* b, double* output, int maxIter, bool initialised);
 
 
 
