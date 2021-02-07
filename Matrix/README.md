@@ -152,6 +152,8 @@ Fulfilling the inputs of the solver (refer to the declared solver in header file
 #### License
 See LICENSE.txt for details.
 
-For further reading on specific methods please refer to documentation.md.
+Testing files, main_tests_components.cpp and main_tests_solvers.cpp are present within the repository for your own leisurely testing.
+
+For further reading/information on specific methods please refer to documentation.md.
 
 ###### Team-Void ACSE-5
