@@ -72,7 +72,6 @@ void CSRMatrix<T>::matVecMult(T *input, T *output)
    if (input == nullptr || output == nullptr)
    {
       std::cerr << "Input or output haven't been created" << std::endl;
-      return;
    }
 
    // Set the output to zero
@@ -359,7 +358,6 @@ CSRMatrix<T>* CSRMatrix<T>::matMatMult(CSRMatrix<T>& mat_right)
    if (this->cols != mat_right.rows)
    {
       std::cerr << "Input dimensions for matrices don't match" << std::endl;
-      return;
    }
 
     //allocating some space for our CSRMatrix.
