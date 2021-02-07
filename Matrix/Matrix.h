@@ -19,7 +19,7 @@ public:
    // Print out the values in our matrix
    void printValues();
    virtual void printMatrix();
-   
+
    // Perform some operations with our matrix
    void matMatMult(Matrix<T>& mat_right, Matrix<T>& output);
   

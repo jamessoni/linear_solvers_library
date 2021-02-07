@@ -15,6 +15,7 @@
 #include "CSRMatrix.cpp"
 
 using namespace std;
+using namespace std::chrono;
 
 void test_jacobi_solver_matrix()
 {
@@ -42,10 +43,12 @@ void test_jacobi_solver_matrix()
         }
 
 
-        clock_t start = clock();
+        //clock_t start = clock();
+        auto start = high_resolution_clock::now();
         A->jacobi_solver_matrix(A, b, x, 1000, true, tol);
-
-        clock_t end = clock();
+        auto stop = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(stop - start);
+        //clock_t end = clock();
 
         A->matVecMult(x, answer_check);
 
@@ -54,11 +57,13 @@ void test_jacobi_solver_matrix()
 
         // if RMS is larger than e-6, function is not working
         if (RMS > 1.e-4) {
-            cout << "Jacobi_solver_matrix method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+            cout << "Jacobi_solver_matrix method failed. " << "Time spent to solve: " << duration.count() << endl;
+            //cout << "Jacobi_solver_matrix method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
         }
         else
         {
-            cout << "Jacobi_solver_matrix method successful. " << "Time spent to solve a " << rowscols << "x" << rowscols << " matrix: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+            cout << "Jacobi_solver_matrix method successful. " << "Time spent to solve: " << duration.count() << endl;
+            //cout << "Jacobi_solver_matrix method successful. " << "Time spent to solve a " << rowscols << "x" << rowscols << " matrix: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
         }
         delete[] b;
         delete[] x;
@@ -315,20 +320,23 @@ void test_gauss_seidel_sparse_known()
     }
 
     //using gauss-seidel method
-    clock_t start = clock();
+    //clock_t start = clock();
+    auto start = high_resolution_clock::now();
     sparse_mat->gauss_seidel_sparse(sparse_mat, b, x, tol);
-    clock_t end = clock();
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    //clock_t end = clock();
 
 
     sparse_mat->matVecMult(x, answer_check);
     double RMS = sparse_mat->RMS_norm_diff(b, answer_check);
 
     if (RMS > 1e-4) {
-        cout << "Sparse Gauss Seidel with known input/output method failed. " << "Time spent to solve: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+        cout << "Sparse Gauss Seidel with known input/output method failed. " << "Time spent to solve: " << duration.count() << endl;
     }
     else
     {
-        cout << "Gauss_Seidel method successful. " << "Time spent to solve a " << rows << "x" << rows << " matrix: " << (double)(end - start) / (double)(CLOCKS_PER_SEC) * 1000.0 << endl;
+        cout << "Sparse Gauss Seidel with known input/output method successful. " << "Time spent to solve: " << duration.count() << endl;
     }
 
     delete[] b;

@@ -758,6 +758,15 @@ void Matrix<T>::LUSolve(Matrix<T>* A, double* b, double* output, bool inplace)
 template <class T>
 void Matrix<T>::conjugate_gradient(Matrix<T>* A, T* b, T* x, int maxIter, float tol)
 {
+    //for (int i = 0; i < this->rows; i++)
+    //{
+    //    std::cout << "b: " << b[i] << "i: " << i << std::endl;
+    //}
+    //for (int i = 0; i < this->rows; i++)
+    //{
+    //    std::cout << "x: " << x[i] << "i: " << i << std::endl;
+    //}
+
    int count = 0; //iteration counter
    // PREALLOCATING EVERYTHING. DOES NOT MAKE SENSE TO ALLOCATE EACH LOOP.
 	auto* r = new T[this->cols]; // residual r

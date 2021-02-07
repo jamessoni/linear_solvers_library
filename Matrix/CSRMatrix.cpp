@@ -72,6 +72,7 @@ void CSRMatrix<T>::matVecMult(T *input, T *output)
    if (input == nullptr || output == nullptr)
    {
       std::cerr << "Input or output haven't been created" << std::endl;
+      return;
    }
 
    // Set the output to zero
@@ -349,78 +350,78 @@ int CSRMatrix<T>::getv(int row,int col)
 
  //Do matrix matrix multiplication
  //output = this * mat_right
-template <class T>
-CSRMatrix<T>* CSRMatrix<T>::matMatMult(CSRMatrix<T>& mat_right)
-{
-    //add better dimcheck
-
-   // Check if our dimensions match
-   if (this->cols != mat_right.rows)
-   {
-      std::cerr << "Input dimensions for matrices don't match" << std::endl;
-   }
-
-    //allocating some space for our CSRMatrix.
-    //row_position can be allocated as a vector because we know how many rows there are already
-    //values and col_index cannot be allocated as vectors because we do not know how many nnzs there are
-
-    int nnzs=0;
-    vector<T> values;
-    vector<int> col_index;
-    auto* row_position = new int[this->rows+1];
-    
-    //first element of row_position is always 0
-    row_position[0]=0;
-
-    //Keeping track of our row/column product
-    T product;
-    int v2;
-	    
-        //looping through every row of the left matrix
-       for (int i = 0; i < this->rows; i++)
-       {
-		   //looping through every column of the right matrix
-           for (int j = 0; j < mat_right.cols; j++)
-           {
-               product = 0;
-               //looping through all values in the left matrix's row
-                for (int v = this->row_position[i]; v < this->row_position[i + 1]; v++)
-                {
-					// for each nnz found check if we have an nnz in the right place in the right matrix too
-                    v2 = mat_right.getv(this->col_index[v],  j);
-
-                    //if we find it
-                    if (v2 > 0)
-                    {
-                        //multiply and add to the product
-                        product += this->values[v] * mat_right.values[v2];
-                    }
-                }
-
-                //if the total product is not 0, then add the value to our work in progress CSRMatrix
-                if (product!=0)
-                {
-                    nnzs+=1;
-                    values.push_back(product);
-                    col_index.push_back(j);
-                }
-            }
-
-            //at the end of every row loop, update row_position;
-            row_position[i+1] = nnzs;
-        }
-
-    auto* toreturn = new CSRMatrix(this->rows,this->cols,nnzs,true);
-    
-    //copying our values over to our newly created CSRmatrix
-
-    copy(values.begin(),values.end(),toreturn->values);
-    copy(col_index.begin(),col_index.end(),toreturn->col_index);
-    toreturn->row_position = row_position;
-
-    //and finally returning the CSRmatrix itself
-    return toreturn;
-}
+//template <class T>
+//CSRMatrix<T>* CSRMatrix<T>::matMatMult(CSRMatrix<T>& mat_right)
+//{
+//    //add better dimcheck
+//
+//   // Check if our dimensions match
+//   if (this->cols != mat_right.rows)
+//   {
+//      std::cerr << "Input dimensions for matrices don't match" << std::endl;
+//   }
+//
+//    //allocating some space for our CSRMatrix.
+//    //row_position can be allocated as a vector because we know how many rows there are already
+//    //values and col_index cannot be allocated as vectors because we do not know how many nnzs there are
+//
+//    int nnzs=0;
+//    vector<T> values;
+//    vector<int> col_index;
+//    auto* row_position = new int[this->rows+1];
+//    
+//    //first element of row_position is always 0
+//    row_position[0]=0;
+//
+//    //Keeping track of our row/column product
+//    T product;
+//    int v2;
+//	    
+//        //looping through every row of the left matrix
+//       for (int i = 0; i < this->rows; i++)
+//       {
+//		   //looping through every column of the right matrix
+//           for (int j = 0; j < mat_right.cols; j++)
+//           {
+//               product = 0;
+//               //looping through all values in the left matrix's row
+//                for (int v = this->row_position[i]; v < this->row_position[i + 1]; v++)
+//                {
+//					// for each nnz found check if we have an nnz in the right place in the right matrix too
+//                    v2 = mat_right.getv(this->col_index[v],  j);
+//
+//                    //if we find it
+//                    if (v2 > 0)
+//                    {
+//                        //multiply and add to the product
+//                        product += this->values[v] * mat_right.values[v2];
+//                    }
+//                }
+//
+//                //if the total product is not 0, then add the value to our work in progress CSRMatrix
+//                if (product!=0)
+//                {
+//                    nnzs+=1;
+//                    values.push_back(product);
+//                    col_index.push_back(j);
+//                }
+//            }
+//
+//            //at the end of every row loop, update row_position;
+//            row_position[i+1] = nnzs;
+//        }
+//
+//    auto* toreturn = new CSRMatrix(this->rows,this->cols,nnzs,true);
+//    
+//    //copying our values over to our newly created CSRmatrix
+//
+//    copy(values.begin(),values.end(),toreturn->values);
+//    copy(col_index.begin(),col_index.end(),toreturn->col_index);
+//    toreturn->row_position = row_position;
+//
+//    //and finally returning the CSRmatrix itself
+//    return toreturn;
+//}
 
 template <class T>
 void CSRMatrix<T>::transposeiflower()
