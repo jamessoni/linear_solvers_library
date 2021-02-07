@@ -152,6 +152,77 @@ Fulfilling the inputs of the solver (refer to the declared solver in header file
         //using gauss-seidel method
         A->gauss_seidel(*A, b, x, tol);
 '''
+###### Documentation:
+The class Matrix has the following methods
+
+Matrix(int rows, int cols, bool preallocate);
+Matrix(int rows, int cols, T *values_ptr);
+Matrix(int rows, int cols, int diag_max, int diag_min);
+virtual ~Matrix();
+
+void printValues();
+virtual void printMatrix();
+void matMatMult(Matrix<T>& mat_right, Matrix<T>& output);
+
+bool SPDMatrixcheck();
+
+void matVecMult(T* vec, T* output);
+void vecVecsubtract(T* vec_a, T* vec_b, T* output);
+float RMS_norm_diff(T* vec_a, T* vec_b);
+
+void gauss_seidel(Matrix<T>* A, T* b, T* x, float tol);
+
+void jacobi_solver_element(Matrix<T>* A,T* b, T* output, int maxIter, bool initialised, float tol);
+
+void jacobi_decomposition(Matrix<T>* D, Matrix<T>* N);
+void jacobi_solver_matrix(Matrix<T>* A, double* b, double* output, int maxIter, bool initialised, float tol);
+
+void LUDecomp(Matrix<T>& L, Matrix<T>& U);
+void SLUDecomp(Matrix<T>* LU);
+void IPLUDecomp();
+
+void fsubstitution(Matrix<T>& L, T* y,T* b);
+void fsubstitutionLU(Matrix<T>& L, T* y,T* b);
+void bsubstitution(Matrix<T>& U, T* x, T* y);
+
+void LUSolve(Matrix<T>* A, double* b, double* output, bool inplace);
+void conjugate_gradient(Matrix<T>* A, T* b, T* x, int maxIter, float tol);
+
+void CholeskyDecomp(Matrix<T>* L);
+
+void transpose();
+
+void CholeskySolve(Matrix<T>* A, T* b, T* x);
+
+void daxpy(int n, double alpha, double* dx, int incx, double* dy, int incy);
+void daxpytx(int n, double alpha, double* dx, int incx, double* dy, int incy);
+void dcopy(int n, double* dx, int incx, double* dy, int incy);
+
+The class CSRMatrix has the following methods:
+CSRMatrix(int rows, int cols, int nnzs, bool preallocate);
+CSRMatrix(int rows, int cols, int nnzs, T* values_ptr, int* row_position, int* col_index);
+~CSRMatrix();
+
+virtual void printMatrix();
+
+void matVecMult(T* input, T* output);
+void dense2sparse(Matrix<T>& tosparsify, CSRMatrix<T>* output);
+
+void jacobi_solver_sparse(CSRMatrix<T>* A, T* b, T* output, int maxIter, bool initialised, float tol);
+
+float RMS_norm_diff(T* vec_a, T* vec_b);
+
+void gauss_seidel_sparse(CSRMatrix<T>* A, T* b, T* x_init, float tol);
+
+int getv(int row,int col);
+CSRMatrix<T>* matMatMult(CSRMatrix<T>& mat_right);
+
+void transposeiflower();
+CSRMatrix<T>* CholeskyDecomp();
+void fsubstitution(T* b, T* y);
+void bsubstitution(T* y, T* x);
+void CholeskySolve(Matrix<T>* A, T* b, T* x);
+        
 #### License
 See LICENSE.txt for details.
 
