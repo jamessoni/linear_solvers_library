@@ -25,6 +25,10 @@ Visual Studio Community IDE users:
 * Open a Visual Studio Project, add all the cloned files to the source files list
 * Build project and run.
 
+Notice:
+CSRMatrix method matMatMult presents a bug with the use of Visual Studio IDE - stating 'C2760 - syntax error: unexpected token 'identifier', expected ';'.
+This bug however is not present using other IDE's. For this reason, we have left the method initially commented.
+
 Terminal:
 * Enter directory with cloned repository files within the Matrix/ folder
 
